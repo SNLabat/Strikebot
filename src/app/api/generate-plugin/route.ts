@@ -243,9 +243,9 @@ class Strikebot {
     private function get_knowledge_context($query) {
         global $wpdb;
         $table = $wpdb->prefix . 'strikebot_knowledge';
-        $items = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC LIMIT 50");
+        $items = $wpdb->get_results("SELECT * FROM $table ORDER BY CASE type WHEN 'qa' THEN 1 WHEN 'text' THEN 2 WHEN 'file' THEN 3 WHEN 'url' THEN 4 ELSE 5 END, created_at DESC");
         
-        $max_chars = 60000;
+        $max_chars = 100000;
         $context = "";
         $items_included = 0;
         
@@ -261,13 +261,23 @@ class Strikebot {
                 default: $type_label = '[' . ucfirst($item->type) . ': ' . $item->name . ']';
             }
             
-            $item_content = "\\n\\n---\\n" . $type_label . "\\n" . $item->content;
+            $content_to_add = $item->content;
+            
+            $max_per_item = 5000;
+            if ($item->type === 'url') { $max_per_item = 3000; }
+            elseif ($item->type === 'file') { $max_per_item = 20000; }
+            
+            if (strlen($content_to_add) > $max_per_item) {
+                $content_to_add = substr($content_to_add, 0, $max_per_item) . "\\n[Content truncated - " . strlen($item->content) . " bytes total...]";
+            }
+            
+            $item_content = "\\n\\n---\\n" . $type_label . "\\n" . $content_to_add;
             $new_length = strlen($context) + strlen($item_content);
             
             if ($new_length > $max_chars) {
                 $remaining = $max_chars - strlen($context);
-                if ($remaining > 100) {
-                    $context .= substr($item_content, 0, $remaining);
+                if ($remaining > 200) {
+                    $context .= substr($item_content, 0, $remaining) . "\\n[Truncated...]";
                     $items_included++;
                 }
                 break;

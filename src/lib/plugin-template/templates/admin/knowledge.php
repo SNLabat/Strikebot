@@ -196,7 +196,53 @@ $link_limit = $settings['limits']['linkTrainingLimit'];
                 echo $with_content;
             ?></p>
             
-            <h4 style="margin-top: 15px;">Raw Database Content Preview:</h4>
+            <h4 style="margin-top: 15px;">Content by Type:</h4>
+            <?php
+            $by_type = array();
+            foreach ($items as $item) {
+                $type = $item->type;
+                if (!isset($by_type[$type])) {
+                    $by_type[$type] = array('count' => 0, 'total_bytes' => 0, 'empty' => 0);
+                }
+                $by_type[$type]['count']++;
+                $by_type[$type]['total_bytes'] += strlen($item->content);
+                if (strlen($item->content) == 0) {
+                    $by_type[$type]['empty']++;
+                }
+            }
+            ?>
+            <table class="widefat" style="font-size: 12px; margin-bottom: 15px;">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Count</th>
+                        <th>Total Content</th>
+                        <th>Empty Items</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($by_type as $type => $stats): ?>
+                    <tr>
+                        <td><strong><?php echo esc_html(ucfirst($type)); ?></strong></td>
+                        <td><?php echo $stats['count']; ?></td>
+                        <td><?php echo size_format($stats['total_bytes']); ?></td>
+                        <td><?php echo $stats['empty']; ?></td>
+                        <td>
+                            <?php if ($stats['empty'] == $stats['count']): ?>
+                                <span style="color: red;">⚠️ ALL EMPTY - Content not being saved!</span>
+                            <?php elseif ($stats['empty'] > 0): ?>
+                                <span style="color: orange;">⚠️ Some empty items</span>
+                            <?php else: ?>
+                                <span style="color: green;">✓ All have content</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            
+            <h4>Raw Database Content Preview:</h4>
             <table class="widefat" style="font-size: 12px;">
                 <thead>
                     <tr>
@@ -208,15 +254,27 @@ $link_limit = $settings['limits']['linkTrainingLimit'];
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($items as $item): ?>
-                    <tr>
+                    <?php foreach ($items as $item): 
+                        $content_len = strlen($item->content);
+                        $is_empty = $content_len == 0;
+                    ?>
+                    <tr style="<?php echo $is_empty ? 'background: #ffe0e0;' : ''; ?>">
                         <td><?php echo $item->id; ?></td>
-                        <td><?php echo esc_html(substr($item->name, 0, 30)); ?></td>
+                        <td><?php echo esc_html(substr($item->name, 0, 50)); ?></td>
                         <td><?php echo esc_html($item->type); ?></td>
-                        <td><?php echo strlen($item->content); ?> bytes</td>
+                        <td>
+                            <?php echo $content_len; ?> bytes
+                            <?php if ($is_empty): ?>
+                                <span style="color: red;">(EMPTY!)</span>
+                            <?php endif; ?>
+                        </td>
                         <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            <?php echo esc_html(substr($item->content, 0, 200)); ?>
-                            <?php if (strlen($item->content) > 200) echo '...'; ?>
+                            <?php if ($is_empty): ?>
+                                <span style="color: red;">No content saved</span>
+                            <?php else: ?>
+                                <?php echo esc_html(substr($item->content, 0, 200)); ?>
+                                <?php if ($content_len > 200) echo '...'; ?>
+                            <?php endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>

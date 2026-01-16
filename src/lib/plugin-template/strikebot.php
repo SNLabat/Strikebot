@@ -337,13 +337,25 @@ class Strikebot {
         global $wpdb;
         $table = $wpdb->prefix . 'strikebot_knowledge';
 
-        $items = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC LIMIT 50");
+        // Get ALL items and include as much as possible
+        // Order: Q&A first (most specific), then files, then URLs
+        $items = $wpdb->get_results("SELECT * FROM $table ORDER BY 
+            CASE type 
+                WHEN 'qa' THEN 1 
+                WHEN 'text' THEN 2 
+                WHEN 'file' THEN 3 
+                WHEN 'url' THEN 4 
+                ELSE 5 
+            END, 
+            created_at DESC");
 
-        // Limit context to ~15000 tokens to avoid exceeding API limits
-        // Approximate: 1 token ≈ 4 characters
-        $max_chars = 60000; // ~15000 tokens
+        // Limit context based on model capabilities
+        // GPT-4.1 and newer models can handle 128k+ tokens
+        // Using ~100,000 chars (~25,000 tokens) to leave room for response
+        $max_chars = 100000;
         $context = "";
         $items_included = 0;
+        $items_by_type = array();
         
         foreach ($items as $item) {
             // Skip items with no content
@@ -370,25 +382,48 @@ class Strikebot {
                     $type_label = '[' . ucfirst($item->type) . ': ' . $item->name . ']';
             }
             
-            $item_content = "\n\n---\n" . $type_label . "\n" . $item->content;
+            // For URLs, truncate very long content to allow more URLs to fit
+            $content_to_add = $item->content;
+            
+            // Truncate content based on type to ensure variety in context
+            $max_per_item = 5000; // Default max per item
+            if ($item->type === 'url') {
+                $max_per_item = 3000; // URLs get less (there are usually many)
+            } elseif ($item->type === 'file') {
+                $max_per_item = 20000; // Files get more but still capped
+            }
+            
+            if (strlen($content_to_add) > $max_per_item) {
+                $content_to_add = substr($content_to_add, 0, $max_per_item) . "\n[Content truncated - " . strlen($item->content) . " bytes total...]";
+            }
+            
+            $item_content = "\n\n---\n" . $type_label . "\n" . $content_to_add;
             $new_length = strlen($context) + strlen($item_content);
             
             if ($new_length > $max_chars) {
                 // Add partial content if there's room
                 $remaining = $max_chars - strlen($context);
-                if ($remaining > 100) {
-                    $context .= substr($item_content, 0, $remaining);
+                if ($remaining > 200) {
+                    $context .= substr($item_content, 0, $remaining) . "\n[Truncated...]";
                     $items_included++;
+                    if (!isset($items_by_type[$item->type])) $items_by_type[$item->type] = 0;
+                    $items_by_type[$item->type]++;
                 }
                 break;
             }
             
             $context .= $item_content;
             $items_included++;
+            if (!isset($items_by_type[$item->type])) $items_by_type[$item->type] = 0;
+            $items_by_type[$item->type]++;
         }
         
-        // Log for debugging (remove in production)
-        error_log('Strikebot: Built context with ' . $items_included . ' items, ' . strlen($context) . ' characters');
+        // Log for debugging
+        $type_summary = array();
+        foreach ($items_by_type as $type => $count) {
+            $type_summary[] = "$type: $count";
+        }
+        error_log('Strikebot: Built context with ' . $items_included . ' items (' . implode(', ', $type_summary) . '), ' . strlen($context) . ' characters');
 
         return $context;
     }
