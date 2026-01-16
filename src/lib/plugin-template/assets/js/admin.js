@@ -341,15 +341,39 @@
     // Modal
     const $modal = $('#strikebot-view-modal');
 
-    $('.strikebot-view-item').on('click', function() {
+    // Use delegated event handler for dynamically added rows
+    $(document).on('click', '.strikebot-view-item', function() {
         const id = $(this).data('id');
         const $row = $(this).closest('tr');
         const name = $row.find('td:first').text();
-        const content = $row.data('content') || 'Loading...';
 
+        // Show modal with loading state
         $('#modal-title').text(name);
-        $('#modal-content').html('<pre style="white-space: pre-wrap;">' + content + '</pre>');
+        $('#modal-content').html('<p>Loading...</p>');
         $modal.removeClass('hidden');
+
+        // Fetch content from server
+        $.ajax({
+            url: strikebotAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'strikebot_get_knowledge',
+                nonce: strikebotAdmin.nonce,
+                id: id
+            },
+            success: function(response) {
+                if (response.success) {
+                    const content = response.data.content || 'No content available';
+                    $('#modal-title').text(response.data.name || name);
+                    $('#modal-content').html('<pre style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; padding: 15px; background: #f5f5f5; border-radius: 4px;">' + $('<div>').text(content).html() + '</pre>');
+                } else {
+                    $('#modal-content').html('<p style="color: red;">Error: ' + (response.data.message || 'Could not load content') + '</p>');
+                }
+            },
+            error: function() {
+                $('#modal-content').html('<p style="color: red;">Error loading content. Please try again.</p>');
+            }
+        });
     });
 
     $('.strikebot-modal-close, .strikebot-modal').on('click', function(e) {

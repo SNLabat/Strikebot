@@ -54,6 +54,7 @@ class Strikebot {
         add_action('wp_ajax_strikebot_save_settings', array($this, 'save_settings'));
         add_action('wp_ajax_strikebot_save_knowledge', array($this, 'save_knowledge'));
         add_action('wp_ajax_strikebot_delete_knowledge', array($this, 'delete_knowledge'));
+        add_action('wp_ajax_strikebot_get_knowledge', array($this, 'get_knowledge'));
         add_action('wp_ajax_strikebot_crawl_sitemap', array($this, 'crawl_sitemap'));
         add_action('wp_ajax_strikebot_crawl_url', array($this, 'crawl_url'));
     }
@@ -518,6 +519,33 @@ class Strikebot {
         $wpdb->delete($table, array('id' => $id));
 
         wp_send_json_success(array('message' => 'Knowledge deleted'));
+    }
+
+    public function get_knowledge() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_knowledge';
+        $id = intval($_POST['id'] ?? 0);
+
+        $item = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE id = %d",
+            $id
+        ));
+
+        if (!$item) {
+            wp_send_json_error(array('message' => 'Item not found'));
+        }
+
+        wp_send_json_success(array(
+            'name' => $item->name,
+            'content' => $item->content,
+            'type' => $item->type
+        ));
     }
 
     public function crawl_sitemap() {
