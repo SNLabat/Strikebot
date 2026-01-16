@@ -23,7 +23,7 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
           {/* Basic Info */}
           <div className="bg-slate-700/30 rounded-xl p-6 border border-slate-600/50">
             <div className="flex items-center gap-3 mb-4">
-              <FileCode className="w-5 h-5 text-purple-400" />
+              <FileCode className="w-5 h-5 text-orange-400" />
               <h3 className="font-semibold text-white">Basic Configuration</h3>
             </div>
             <dl className="space-y-3">
@@ -53,7 +53,7 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
           {/* Limits */}
           <div className="bg-slate-700/30 rounded-xl p-6 border border-slate-600/50">
             <div className="flex items-center gap-3 mb-4">
-              <Database className="w-5 h-5 text-purple-400" />
+              <Database className="w-5 h-5 text-orange-400" />
               <h3 className="font-semibold text-white">Limits</h3>
             </div>
             <dl className="space-y-3">
@@ -93,7 +93,7 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
           {/* Features */}
           <div className="bg-slate-700/30 rounded-xl p-6 border border-slate-600/50">
             <div className="flex items-center gap-3 mb-4">
-              <Shield className="w-5 h-5 text-purple-400" />
+              <Shield className="w-5 h-5 text-orange-400" />
               <h3 className="font-semibold text-white">Features</h3>
             </div>
             <ul className="space-y-2">
@@ -146,7 +146,7 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
           {/* Theme Preview */}
           <div className="bg-slate-700/30 rounded-xl p-6 border border-slate-600/50">
             <div className="flex items-center gap-3 mb-4">
-              <Palette className="w-5 h-5 text-purple-400" />
+              <Palette className="w-5 h-5 text-orange-400" />
               <h3 className="font-semibold text-white">Theme Preview</h3>
             </div>
             <div className="flex gap-4 mb-4">
@@ -185,7 +185,7 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
           {/* Widget Preview */}
           <div className="bg-slate-700/30 rounded-xl p-6 border border-slate-600/50">
             <div className="flex items-center gap-3 mb-4">
-              <MessageSquare className="w-5 h-5 text-purple-400" />
+              <MessageSquare className="w-5 h-5 text-orange-400" />
               <h3 className="font-semibold text-white">Widget Settings</h3>
             </div>
             <dl className="space-y-3">
@@ -207,31 +207,31 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
           </div>
 
           {/* Plugin Info */}
-          <div className="bg-purple-500/20 border border-purple-500/50 rounded-xl p-6">
+          <div className="bg-orange-500/20 border border-orange-500/50 rounded-xl p-6">
             <h3 className="font-semibold text-white mb-3">What&apos;s Included in the Plugin</h3>
             <ul className="space-y-2 text-sm text-slate-300">
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-purple-400" />
+                <Check className="w-4 h-4 mt-0.5 text-orange-400" />
                 Pre-configured chatbot with your settings
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-purple-400" />
+                <Check className="w-4 h-4 mt-0.5 text-orange-400" />
                 Knowledge Base management (sitemaps, files, URLs, Q&A)
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-purple-400" />
+                <Check className="w-4 h-4 mt-0.5 text-orange-400" />
                 WordPress admin dashboard
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-purple-400" />
+                <Check className="w-4 h-4 mt-0.5 text-orange-400" />
                 Customizable widget appearance
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-purple-400" />
+                <Check className="w-4 h-4 mt-0.5 text-orange-400" />
                 Media Library integration for icons
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 mt-0.5 text-purple-400" />
+                <Check className="w-4 h-4 mt-0.5 text-orange-400" />
                 Clean uninstall (removes all data)
               </li>
             </ul>

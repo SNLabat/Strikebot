@@ -30,11 +30,11 @@ body {
 .rgb-gradient {
   background: linear-gradient(
     90deg,
-    #ff006e 0%,
-    #8338ec 25%,
-    #3a86ff 50%,
-    #06ffa5 75%,
-    #ff006e 100%
+    #ff6b35 0%,
+    #f7931e 25%,
+    #ff8c42 50%,
+    #ff6b00 75%,
+    #ff6b35 100%
   );
   background-size: 200% 200%;
   animation: rgbShift 5s ease infinite;
@@ -47,11 +47,11 @@ body {
   border: 2px solid;
   border-image: linear-gradient(
     90deg,
-    #ff006e 0%,
-    #8338ec 25%,
-    #3a86ff 50%,
-    #06ffa5 75%,
-    #ff006e 100%
+    #ff6b35 0%,
+    #f7931e 25%,
+    #ff8c42 50%,
+    #ff6b00 75%,
+    #ff6b35 100%
   ) 1;
   animation: rgbShift 5s ease infinite;
 }
@@ -68,10 +68,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff, #06ffa5);
+  background: linear-gradient(135deg, #ff6b35, #f7931e, #ff8c42, #ff6b00);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #3a86ff, #06ffa5, #ff006e, #8338ec);
+  background: linear-gradient(135deg, #ff8c42, #ff6b00, #ff6b35, #f7931e);
 }

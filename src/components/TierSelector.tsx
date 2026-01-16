@@ -25,19 +25,19 @@ export default function TierSelector({ selectedTier, onTierChange }: TierSelecto
             onClick={() => onTierChange(tier.name)}
             className={`relative cursor-pointer rounded-xl border-2 p-6 transition-all ${
               selectedTier === tier.name
-                ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-pink-500/20 shadow-lg shadow-purple-500/50'
+                ? 'border-orange-500 bg-gradient-to-br from-orange-500/20 to-orange-600/20 shadow-lg shadow-orange-500/50'
                 : 'border-slate-600 bg-slate-700/30 hover:border-slate-500 hover:shadow-md'
             }`}
           >
             {selectedTier === tier.name && (
-              <div className="absolute -top-3 -right-3 w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
+              <div className="absolute -top-3 -right-3 w-6 h-6 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
                 <Check className="w-4 h-4 text-white" />
               </div>
             )}
 
             <h3 className="text-lg font-semibold text-white mb-1">{tier.displayName}</h3>
             <div className="mb-4">
-              <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">${tier.price}</span>
+              <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">${tier.price}</span>
               <span className="text-slate-400">/month</span>
             </div>
 

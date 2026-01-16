@@ -32,7 +32,7 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
             type="text"
             value={config.name}
             onChange={(e) => onConfigChange({ ...config, name: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder:text-slate-400"
             placeholder="Enter chatbot name"
           />
           <p className="text-xs text-slate-400 mt-1">
@@ -49,7 +49,7 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
           <select
             value={config.model}
             onChange={(e) => onConfigChange({ ...config, model: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white"
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white"
           >
             {availableModels.map((model) => (
               <option key={model.id} value={model.id}>
@@ -74,7 +74,7 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
             type="password"
             value={config.apiKey}
             onChange={(e) => onConfigChange({ ...config, apiKey: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder:text-slate-400"
             placeholder="Enter your API key"
           />
           <p className="text-xs text-slate-400 mt-1">
@@ -92,7 +92,7 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
             type="url"
             value={config.apiEndpoint}
             onChange={(e) => onConfigChange({ ...config, apiEndpoint: e.target.value })}
-            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
+            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder:text-slate-400"
             placeholder="https://api.openai.com/v1"
           />
           <p className="text-xs text-slate-400 mt-1">
@@ -159,7 +159,7 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
                 Auto Retrain
               </span>
             )}
-            <span className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-sm border border-purple-500/30">
+            <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm border border-orange-500/30">
               {config.features.modelAccess === 'advanced' ? 'Advanced' : 'Basic'} Models
             </span>
           </div>

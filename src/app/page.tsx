@@ -134,13 +134,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Bot className="w-8 h-8 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500" />
-              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500">Strikebot Builder</h1>
+              <Bot className="w-8 h-8 text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600" />
+              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600">Strikebot Builder</h1>
             </div>
             <button
               onClick={handleGeneratePlugin}
               disabled={isGenerating}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/50"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-orange-500/50"
             >
               <Download className="w-4 h-4" />
               {isGenerating ? 'Generating...' : 'Download Plugin'}
@@ -160,7 +160,7 @@ export default function Home() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all flex-1 justify-center ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 text-white shadow-lg border border-purple-500/50'
+                    ? 'bg-gradient-to-r from-orange-500/20 via-orange-600/20 to-orange-700/20 text-white shadow-lg border border-orange-500/50'
                     : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
               >

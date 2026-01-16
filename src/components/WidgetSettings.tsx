@@ -35,7 +35,7 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
             <textarea
               value={config.widget.welcomeMessage}
               onChange={(e) => updateWidget({ welcomeMessage: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder:text-slate-400"
               rows={3}
               placeholder="Hello! How can I help you today?"
             />
@@ -53,7 +53,7 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
               type="text"
               value={config.widget.placeholder}
               onChange={(e) => updateWidget({ placeholder: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder:text-slate-400"
               placeholder="Type your message..."
             />
           </div>
@@ -69,13 +69,13 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
                 onClick={() => updateWidget({ position: 'bottom-right' })}
                 className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
                   config.widget.position === 'bottom-right'
-                    ? 'border-purple-500 bg-purple-500/20'
+                    ? 'border-orange-500 bg-orange-500/20'
                     : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-16 h-10 border border-slate-500 rounded relative bg-slate-800">
-                    <div className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-purple-500" />
+                    <div className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-orange-500" />
                   </div>
                 </div>
                 <p className="text-sm mt-2 text-center text-slate-300">Bottom Right</p>
@@ -84,13 +84,13 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
                 onClick={() => updateWidget({ position: 'bottom-left' })}
                 className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
                   config.widget.position === 'bottom-left'
-                    ? 'border-purple-500 bg-purple-500/20'
+                    ? 'border-orange-500 bg-orange-500/20'
                     : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-16 h-10 border border-slate-500 rounded relative bg-slate-800">
-                    <div className="absolute bottom-1 left-1 w-3 h-3 rounded-full bg-purple-500" />
+                    <div className="absolute bottom-1 left-1 w-3 h-3 rounded-full bg-orange-500" />
                   </div>
                 </div>
                 <p className="text-sm mt-2 text-center text-slate-300">Bottom Left</p>
@@ -108,7 +108,7 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
               type="url"
               value={config.widget.iconUrl}
               onChange={(e) => updateWidget({ iconUrl: e.target.value })}
-              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-white placeholder:text-slate-400"
               placeholder="https://example.com/icon.png"
             />
             <p className="text-xs text-slate-400 mt-1">

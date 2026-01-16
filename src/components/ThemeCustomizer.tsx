@@ -78,7 +78,7 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
                 })}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                   config.theme.mode === 'light'
-                    ? 'border-purple-500 bg-purple-500/20 text-white'
+                    ? 'border-orange-500 bg-orange-500/20 text-white'
                     : 'border-slate-600 bg-slate-700/30 text-slate-300 hover:border-slate-500'
                 }`}
               >
@@ -93,7 +93,7 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
                 })}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                   config.theme.mode === 'dark'
-                    ? 'border-purple-500 bg-purple-500/20 text-white'
+                    ? 'border-orange-500 bg-orange-500/20 text-white'
                     : 'border-slate-600 bg-slate-700/30 text-slate-300 hover:border-slate-500'
                 }`}
               >

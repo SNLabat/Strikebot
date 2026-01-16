@@ -100,8 +100,18 @@
                                 type: 'url',
                                 name: url,
                                 content: response.data.content
+                            },
+                            success: function(saveResponse) {
+                                if (!saveResponse.success) {
+                                    console.error('Failed to save URL:', url, saveResponse.data);
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                console.error('Error saving URL:', url, error);
                             }
                         });
+                    } else {
+                        console.error('Failed to crawl URL:', url, response);
                     }
                 },
                 complete: function() {
@@ -361,17 +371,21 @@
                 nonce: strikebotAdmin.nonce,
                 id: id
             },
+            dataType: 'json',
+            timeout: 30000,
             success: function(response) {
-                if (response.success) {
+                if (response.success && response.data) {
                     const content = response.data.content || 'No content available';
                     $('#modal-title').text(response.data.name || name);
                     $('#modal-content').html('<pre style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; padding: 15px; background: #f5f5f5; border-radius: 4px;">' + $('<div>').text(content).html() + '</pre>');
                 } else {
-                    $('#modal-content').html('<p style="color: red;">Error: ' + (response.data.message || 'Could not load content') + '</p>');
+                    const errorMsg = (response.data && response.data.message) ? response.data.message : 'Could not load content';
+                    $('#modal-content').html('<p style="color: red;">Error: ' + errorMsg + '</p>');
                 }
             },
-            error: function() {
-                $('#modal-content').html('<p style="color: red;">Error loading content. Please try again.</p>');
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error, xhr.responseText);
+                $('#modal-content').html('<p style="color: red;">Error loading content: ' + (error || 'Please check console for details') + '</p>');
             }
         });
     });
