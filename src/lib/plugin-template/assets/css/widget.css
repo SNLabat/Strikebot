@@ -333,6 +333,29 @@
     color: #ffffff !important;
 }
 
+/* Force white text in dark mode - high specificity */
+.strikebot-dark .strikebot-chat-input input,
+.strikebot-dark .strikebot-chat-input input[type="text"],
+.strikebot-dark #strikebot-input,
+.strikebot-dark.strikebot-widget #strikebot-input,
+.strikebot-widget.strikebot-dark #strikebot-input {
+    color: #ffffff !important;
+}
+
+.strikebot-dark .strikebot-chat-input input:focus,
+.strikebot-dark .strikebot-chat-input input[type="text"]:focus,
+.strikebot-dark #strikebot-input:focus,
+.strikebot-dark.strikebot-widget #strikebot-input:focus,
+.strikebot-widget.strikebot-dark #strikebot-input:focus {
+    color: #ffffff !important;
+}
+
+/* Also override for when typing */
+.strikebot-dark #strikebot-input:not(:placeholder-shown),
+.strikebot-widget.strikebot-dark #strikebot-input:not(:placeholder-shown) {
+    color: #ffffff !important;
+}
+
 .strikebot-dark .strikebot-chat-input input::placeholder {
     color: #9ca3af;
 }

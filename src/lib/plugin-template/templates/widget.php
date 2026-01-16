@@ -72,7 +72,8 @@ $placeholder = $widget['placeholder'] ?? 'Type your message...';
             <input type="text"
                    id="strikebot-input"
                    placeholder="<?php echo esc_attr($placeholder); ?>"
-                   autocomplete="off">
+                   autocomplete="off"
+                   style="<?php echo $mode === 'dark' ? 'color: #ffffff !important;' : ''; ?>">
             <button id="strikebot-send" aria-label="Send message">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
