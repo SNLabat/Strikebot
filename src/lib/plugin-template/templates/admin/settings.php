@@ -5,9 +5,11 @@ $settings = get_option('strikebot_settings');
 $api_key = get_option('strikebot_api_key');
 $api_endpoint = get_option('strikebot_api_endpoint');
 $model = get_option('strikebot_model');
+$admin_theme = get_option('strikebot_admin_theme', 'light');
+$admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
 ?>
 
-<div class="wrap strikebot-admin">
+<div class="wrap strikebot-admin <?php echo esc_attr($admin_theme_class); ?>">
     <h1>Settings</h1>
 
     <form id="strikebot-settings-form" class="strikebot-form">

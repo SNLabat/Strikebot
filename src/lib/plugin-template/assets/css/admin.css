@@ -1,12 +1,28 @@
-/* Strikebot Admin Styles - Modern Dark Mode */
+/* Strikebot Admin Styles - Light/Dark Mode Toggle */
 
 :root {
     --strikebot-orange: #ff7e5f;
     --strikebot-orange-light: #feb47b;
     --strikebot-orange-dark: #ff6b4a;
     --strikebot-gradient: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+    --strikebot-border-radius: 12px;
     
-    /* Dark Mode Colors */
+    /* Light Mode (Default) */
+    --strikebot-bg-primary: #ffffff;
+    --strikebot-bg-secondary: #f8fafc;
+    --strikebot-bg-card: #ffffff;
+    --strikebot-bg-hover: #f1f5f9;
+    --strikebot-border: #e2e8f0;
+    --strikebot-text-primary: #1e293b;
+    --strikebot-text-secondary: #475569;
+    --strikebot-text-muted: #64748b;
+    --strikebot-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
+    --strikebot-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --strikebot-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.strikebot-admin.strikebot-dark-mode {
+    /* Dark Mode */
     --strikebot-bg-primary: #0f172a;
     --strikebot-bg-secondary: #1e293b;
     --strikebot-bg-card: #1e293b;
@@ -15,11 +31,9 @@
     --strikebot-text-primary: #f1f5f9;
     --strikebot-text-secondary: #cbd5e1;
     --strikebot-text-muted: #94a3b8;
-    
     --strikebot-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
     --strikebot-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
     --strikebot-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --strikebot-border-radius: 12px;
 }
 
 .strikebot-admin {
@@ -29,8 +43,41 @@
     box-sizing: border-box;
     background: var(--strikebot-bg-primary);
     color: var(--strikebot-text-primary);
-    min-height: 100vh;
     border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.strikebot-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.strikebot-theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--strikebot-bg-card);
+    border: 2px solid var(--strikebot-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--strikebot-text-primary);
+}
+
+.strikebot-theme-toggle:hover {
+    border-color: var(--strikebot-orange);
+    background: var(--strikebot-bg-hover);
+}
+
+.strikebot-theme-toggle .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
 }
 
 .strikebot-admin h1 {

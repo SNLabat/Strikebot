@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('STRIKEBOT_VERSION', '1.2.0');
+define('STRIKEBOT_VERSION', '1.3.0');
 define('STRIKEBOT_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STRIKEBOT_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -52,6 +52,7 @@ class Strikebot {
         add_action('wp_ajax_strikebot_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_nopriv_strikebot_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_strikebot_save_settings', array($this, 'save_settings'));
+        add_action('wp_ajax_strikebot_save_admin_theme', array($this, 'save_admin_theme'));
         add_action('wp_ajax_strikebot_save_knowledge', array($this, 'save_knowledge'));
         add_action('wp_ajax_strikebot_delete_knowledge', array($this, 'delete_knowledge'));
         add_action('wp_ajax_strikebot_get_knowledge', array($this, 'get_knowledge'));
@@ -520,6 +521,24 @@ class Strikebot {
         update_option('strikebot_settings', $settings);
 
         wp_send_json_success(array('message' => 'Settings saved'));
+    }
+
+    public function save_admin_theme() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+        }
+
+        $theme = sanitize_text_field($_POST['theme'] ?? 'light');
+        
+        if (!in_array($theme, array('light', 'dark'))) {
+            $theme = 'light';
+        }
+
+        update_option('strikebot_admin_theme', $theme);
+
+        wp_send_json_success(array('message' => 'Theme saved', 'theme' => $theme));
     }
 
     public function save_knowledge() {

@@ -2,6 +2,8 @@
 if (!defined('ABSPATH')) exit;
 
 $settings = get_option('strikebot_settings');
+$admin_theme = get_option('strikebot_admin_theme', 'light');
+$admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
 
 global $wpdb;
 $table = $wpdb->prefix . 'strikebot_knowledge';
@@ -14,7 +16,7 @@ $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type IN ('url', 
 $link_limit = $settings['limits']['linkTrainingLimit'];
 ?>
 
-<div class="wrap strikebot-admin">
+<div class="wrap strikebot-admin <?php echo esc_attr($admin_theme_class); ?>">
     <h1>Knowledge Base</h1>
     <p class="description">Train your chatbot by adding content from various sources. The chatbot will use this information to answer questions.</p>
 

@@ -4,6 +4,42 @@
 (function($) {
     'use strict';
 
+    // Theme Toggle
+    $('#strikebot-theme-toggle').on('click', function() {
+        const $toggle = $(this);
+        const currentTheme = $toggle.data('theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        const $admin = $('.strikebot-admin');
+        
+        // Update UI immediately for instant feedback
+        if (newTheme === 'dark') {
+            $admin.addClass('strikebot-dark-mode');
+            $toggle.find('.dashicons').removeClass('dashicons-moon').addClass('dashicons-sun');
+            $toggle.find('span:last').text('Light Mode');
+        } else {
+            $admin.removeClass('strikebot-dark-mode');
+            $toggle.find('.dashicons').removeClass('dashicons-sun').addClass('dashicons-moon');
+            $toggle.find('span:last').text('Dark Mode');
+        }
+        $toggle.data('theme', newTheme);
+        
+        // Save preference
+        $.ajax({
+            url: strikebotAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'strikebot_save_admin_theme',
+                nonce: strikebotAdmin.nonce,
+                theme: newTheme
+            },
+            success: function(response) {
+                if (!response.success) {
+                    console.error('Failed to save theme preference');
+                }
+            }
+        });
+    });
+
     // Tab functionality
     $('.strikebot-tab').on('click', function() {
         const tab = $(this).data('tab');

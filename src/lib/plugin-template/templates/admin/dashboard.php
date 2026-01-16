@@ -17,8 +17,18 @@ $storage_used = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $knowledge_tabl
 $storage_limit = ($settings['limits']['storageLimitMB'] ?? 0.4) * 1024 * 1024;
 ?>
 
-<div class="wrap strikebot-admin">
-    <h1><?php echo esc_html($settings['name'] ?? 'Strikebot'); ?> Dashboard</h1>
+<?php
+$admin_theme = get_option('strikebot_admin_theme', 'light'); // Default to light
+$admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
+?>
+<div class="wrap strikebot-admin <?php echo esc_attr($admin_theme_class); ?>">
+    <div class="strikebot-admin-header">
+        <h1><?php echo esc_html($settings['name'] ?? 'Strikebot'); ?> Dashboard</h1>
+        <button type="button" class="strikebot-theme-toggle" id="strikebot-theme-toggle" data-theme="<?php echo esc_attr($admin_theme); ?>">
+            <span class="dashicons dashicons-<?php echo $admin_theme === 'dark' ? 'sun' : 'moon'; ?>"></span>
+            <span><?php echo $admin_theme === 'dark' ? 'Light Mode' : 'Dark Mode'; ?></span>
+        </button>
+    </div>
 
     <div class="strikebot-dashboard">
         <!-- Usage Stats -->

@@ -4,9 +4,11 @@ if (!defined('ABSPATH')) exit;
 $settings = get_option('strikebot_settings');
 $theme = $settings['theme'] ?? array();
 $widget = $settings['widget'] ?? array();
+$admin_theme = get_option('strikebot_admin_theme', 'light');
+$admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
 ?>
 
-<div class="wrap strikebot-admin">
+<div class="wrap strikebot-admin <?php echo esc_attr($admin_theme_class); ?>">
     <h1>Appearance Settings</h1>
     <p class="description">Customize how your chatbot looks and feels.</p>
 
