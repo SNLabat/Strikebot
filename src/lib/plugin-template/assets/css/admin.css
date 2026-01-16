@@ -1,13 +1,24 @@
-/* Strikebot Admin Styles - Modern & Polished */
+/* Strikebot Admin Styles - Modern Dark Mode */
 
 :root {
     --strikebot-orange: #ff7e5f;
     --strikebot-orange-light: #feb47b;
     --strikebot-orange-dark: #ff6b4a;
     --strikebot-gradient: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
-    --strikebot-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
-    --strikebot-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --strikebot-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+    
+    /* Dark Mode Colors */
+    --strikebot-bg-primary: #0f172a;
+    --strikebot-bg-secondary: #1e293b;
+    --strikebot-bg-card: #1e293b;
+    --strikebot-bg-hover: #334155;
+    --strikebot-border: #334155;
+    --strikebot-text-primary: #f1f5f9;
+    --strikebot-text-secondary: #cbd5e1;
+    --strikebot-text-muted: #94a3b8;
+    
+    --strikebot-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --strikebot-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --strikebot-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.5);
     --strikebot-border-radius: 12px;
 }
 
@@ -16,6 +27,10 @@
     margin: 20px auto;
     padding: 0 20px;
     box-sizing: border-box;
+    background: var(--strikebot-bg-primary);
+    color: var(--strikebot-text-primary);
+    min-height: 100vh;
+    border-radius: 8px;
 }
 
 .strikebot-admin h1 {
@@ -29,15 +44,15 @@
 }
 
 .strikebot-admin .description {
-    color: #64748b;
+    color: var(--strikebot-text-secondary);
     margin-bottom: 24px;
     font-size: 15px;
 }
 
-/* Cards - Modern with subtle shadows */
+/* Cards - Modern Dark Mode */
 .strikebot-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
+    background: var(--strikebot-bg-card);
+    border: 1px solid var(--strikebot-border);
     border-radius: var(--strikebot-border-radius);
     padding: 24px;
     margin-bottom: 24px;
@@ -49,21 +64,41 @@
     overflow-wrap: break-word;
     min-width: 0;
     width: 100%;
+    position: relative;
+}
+
+.strikebot-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--strikebot-gradient);
+    border-radius: var(--strikebot-border-radius) var(--strikebot-border-radius) 0 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.strikebot-card:hover::before {
+    opacity: 1;
 }
 
 .strikebot-card:hover {
     box-shadow: var(--strikebot-shadow-md);
     transform: translateY(-2px);
+    border-color: var(--strikebot-orange);
+    background: var(--strikebot-bg-hover);
 }
 
 .strikebot-card h2 {
     margin-top: 0;
     margin-bottom: 20px;
     padding-bottom: 12px;
-    border-bottom: 2px solid #f1f5f9;
+    border-bottom: 2px solid var(--strikebot-border);
     font-size: 18px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--strikebot-text-primary);
     word-wrap: break-word;
     overflow-wrap: break-word;
     line-height: 1.4;
@@ -106,7 +141,7 @@
 }
 
 .strikebot-stat-label {
-    color: #64748b;
+    color: var(--strikebot-text-secondary);
     font-size: 14px;
     margin-bottom: 16px;
     font-weight: 500;
@@ -118,12 +153,13 @@
 }
 
 .strikebot-progress {
-    background: #f1f5f9;
+    background: rgba(15, 23, 42, 0.5);
     border-radius: 100px;
     height: 12px;
     overflow: hidden;
     margin-top: 12px;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--strikebot-border);
 }
 
 .strikebot-progress-bar {
@@ -158,7 +194,7 @@
 }
 
 .strikebot-feature:hover {
-    background: #f8fafc;
+    background: var(--strikebot-bg-hover);
 }
 
 .strikebot-feature .dashicons-yes-alt {
@@ -176,7 +212,7 @@
 .strikebot-quick-actions h2 {
     font-size: 20px;
     font-weight: 600;
-    color: #1e293b;
+    color: var(--strikebot-text-primary);
     margin-bottom: 20px;
 }
 
@@ -192,11 +228,11 @@
     align-items: center;
     gap: 12px;
     padding: 24px 20px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border: 2px solid #e2e8f0;
+    background: var(--strikebot-bg-card);
+    border: 2px solid var(--strikebot-border);
     border-radius: var(--strikebot-border-radius);
     text-decoration: none;
-    color: #475569;
+    color: var(--strikebot-text-secondary);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 500;
     font-size: 14px;
@@ -205,10 +241,28 @@
     word-wrap: break-word;
     overflow-wrap: break-word;
     text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.strikebot-action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--strikebot-gradient);
+    opacity: 0.1;
+    transition: left 0.3s ease;
+}
+
+.strikebot-action-card:hover::before {
+    left: 0;
 }
 
 .strikebot-action-card:hover {
-    background: #fff;
+    background: var(--strikebot-bg-hover);
     border-color: var(--strikebot-orange);
     color: var(--strikebot-orange);
     transform: translateY(-4px);
@@ -240,14 +294,14 @@
 }
 
 .strikebot-storage-info {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border: 1px solid #fbbf24;
+    background: linear-gradient(135deg, rgba(255, 126, 95, 0.15) 0%, rgba(254, 180, 123, 0.15) 100%);
+    border: 1px solid var(--strikebot-orange);
     border-radius: var(--strikebot-border-radius);
     padding: 14px 18px;
     margin-bottom: 24px;
     font-size: 14px;
     font-weight: 500;
-    color: #92400e;
+    color: var(--strikebot-orange-light);
     box-shadow: var(--strikebot-shadow-sm);
 }
 
@@ -256,7 +310,7 @@
     display: flex;
     gap: 8px;
     margin-bottom: 24px;
-    border-bottom: 2px solid #f1f5f9;
+    border-bottom: 2px solid var(--strikebot-border);
     padding-bottom: 0;
 }
 
@@ -269,18 +323,18 @@
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
-    color: #64748b;
+    color: var(--strikebot-text-secondary);
     transition: all 0.2s ease;
     margin-bottom: -2px;
 }
 
 .strikebot-tab:hover {
-    background: #f8fafc;
+    background: var(--strikebot-bg-hover);
     color: var(--strikebot-orange);
 }
 
 .strikebot-tab.active {
-    background: #fff;
+    background: var(--strikebot-bg-card);
     color: var(--strikebot-orange);
     border-bottom-color: var(--strikebot-orange);
     font-weight: 600;
@@ -303,7 +357,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #334155;
+    color: var(--strikebot-text-primary);
     font-size: 14px;
 }
 
@@ -315,11 +369,12 @@
 .strikebot-form-group select {
     width: 100%;
     padding: 12px 16px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--strikebot-border);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.2s ease;
-    background: #fff;
+    background: var(--strikebot-bg-secondary);
+    color: var(--strikebot-text-primary);
 }
 
 .strikebot-form-group input:focus,
@@ -333,7 +388,7 @@
 .strikebot-form-group .description {
     margin-top: 6px;
     font-size: 13px;
-    color: #64748b;
+    color: var(--strikebot-text-muted);
 }
 
 /* Badges - Colorful & Modern */
@@ -357,7 +412,7 @@
 .strikebot-empty {
     text-align: center;
     padding: 60px 20px;
-    color: #94a3b8;
+    color: var(--strikebot-text-muted);
 }
 
 .strikebot-empty .dashicons {
@@ -389,7 +444,8 @@
 }
 
 .strikebot-modal-content {
-    background: #fff;
+    background: var(--strikebot-bg-card);
+    border: 1px solid var(--strikebot-border);
     border-radius: var(--strikebot-border-radius);
     padding: 32px;
     max-width: 700px;
@@ -399,6 +455,7 @@
     position: relative;
     box-shadow: var(--strikebot-shadow-lg);
     animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--strikebot-text-primary);
 }
 
 .strikebot-modal-content h2 {
@@ -412,7 +469,7 @@
     right: 20px;
     font-size: 28px;
     cursor: pointer;
-    color: #94a3b8;
+    color: var(--strikebot-text-muted);
     width: 32px;
     height: 32px;
     display: flex;
@@ -423,8 +480,8 @@
 }
 
 .strikebot-modal-close:hover {
-    color: #475569;
-    background: #f1f5f9;
+    color: var(--strikebot-text-primary);
+    background: var(--strikebot-bg-hover);
 }
 
 /* Appearance Page */
@@ -450,20 +507,20 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: #f1f5f9;
+    background: var(--strikebot-bg-secondary);
     display: flex;
     align-items: center;
     justify-content: center;
     background-size: cover;
     background-position: center;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--strikebot-border);
 }
 
 .strikebot-icon-preview .dashicons {
     font-size: 32px;
     width: 32px;
     height: 32px;
-    color: #94a3b8;
+    color: var(--strikebot-text-muted);
 }
 
 .strikebot-color-input {
@@ -476,7 +533,7 @@
     width: 60px;
     height: 44px;
     padding: 2px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--strikebot-border);
     border-radius: 8px;
     cursor: pointer;
     transition: border-color 0.2s ease;
@@ -501,12 +558,13 @@
 .strikebot-position-option {
     flex: 1;
     padding: 16px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--strikebot-border);
     border-radius: 10px;
     cursor: pointer;
     text-align: center;
     transition: all 0.2s ease;
-    background: #fff;
+    background: var(--strikebot-bg-card);
+    color: var(--strikebot-text-primary);
 }
 
 .strikebot-mode-option input,
@@ -524,15 +582,15 @@
 .strikebot-mode-option.active,
 .strikebot-position-option.active {
     border-color: var(--strikebot-orange);
-    background: linear-gradient(135deg, #fff5f2 0%, #ffe5e1 100%);
+    background: linear-gradient(135deg, rgba(255, 126, 95, 0.15) 0%, rgba(254, 180, 123, 0.15) 100%);
     box-shadow: var(--strikebot-shadow-sm);
 }
 
 .strikebot-position-preview {
     width: 64px;
     height: 48px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
+    background: var(--strikebot-bg-secondary);
+    border: 2px solid var(--strikebot-border);
     border-radius: 8px;
     margin: 0 auto 12px;
     position: relative;
@@ -558,7 +616,8 @@
 }
 
 .strikebot-preview-frame {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: var(--strikebot-bg-secondary);
+    border: 1px solid var(--strikebot-border);
     border-radius: var(--strikebot-border-radius);
     padding: 24px;
     min-height: 400px;
@@ -570,7 +629,8 @@
 
 .strikebot-preview-chat {
     width: 340px;
-    background: var(--preview-bg, #fff);
+    background: var(--preview-bg, var(--strikebot-bg-card));
+    border: 1px solid var(--strikebot-border);
     border-radius: var(--strikebot-border-radius);
     box-shadow: var(--strikebot-shadow-lg);
     overflow: hidden;
@@ -633,7 +693,8 @@
 }
 
 .preview-message.bot .preview-message-content {
-    background: #f1f5f9;
+    background: var(--strikebot-bg-secondary);
+    color: var(--strikebot-text-primary);
     border-bottom-left-radius: 4px;
 }
 
@@ -653,9 +714,11 @@
 .preview-input input {
     flex: 1;
     padding: 10px 16px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--strikebot-border);
     border-radius: 24px;
     font-size: 14px;
+    background: var(--strikebot-bg-secondary);
+    color: var(--strikebot-text-primary);
 }
 
 .preview-input button {
@@ -682,17 +745,17 @@
 }
 
 .strikebot-limit-item {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: var(--strikebot-bg-card);
     padding: 20px;
     border-radius: 10px;
     text-align: center;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--strikebot-border);
 }
 
 .strikebot-limit-label {
     display: block;
     font-size: 13px;
-    color: #64748b;
+    color: var(--strikebot-text-secondary);
     margin-bottom: 8px;
     font-weight: 500;
 }
@@ -722,12 +785,12 @@
 }
 
 .strikebot-feature-item:hover {
-    background: #f8fafc;
+    background: var(--strikebot-bg-hover);
 }
 
 .strikebot-feature-item.enabled {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
 .strikebot-feature-item.enabled .dashicons {
@@ -735,19 +798,19 @@
 }
 
 .strikebot-feature-item.disabled {
-    background: #f8fafc;
-    color: #94a3b8;
-    border: 1px solid #e2e8f0;
+    background: var(--strikebot-bg-card);
+    color: var(--strikebot-text-muted);
+    border: 1px solid var(--strikebot-border);
 }
 
 .strikebot-feature-item.disabled .dashicons {
-    color: #cbd5e1;
+    color: var(--strikebot-text-muted);
 }
 
 /* Danger Zone */
 .strikebot-danger-zone {
-    border-color: #fecaca;
-    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border-color: rgba(239, 68, 68, 0.5);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
 }
 
 .strikebot-danger-zone h2 {
@@ -765,31 +828,32 @@
     justify-content: space-between;
     align-items: center;
     padding: 16px;
-    background: #fff;
+    background: var(--strikebot-bg-card);
     border-radius: 8px;
-    border: 1px solid #fecaca;
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: var(--strikebot-text-primary);
 }
 
 .strikebot-danger-action p {
     margin: 5px 0 0;
     font-size: 13px;
-    color: #64748b;
+    color: var(--strikebot-text-secondary);
 }
 
 /* Form Actions */
 .strikebot-form-actions {
     margin-top: 32px;
     padding-top: 24px;
-    border-top: 2px solid #f1f5f9;
+    border-top: 2px solid var(--strikebot-border);
 }
 
 /* Results */
 .strikebot-results {
     margin-top: 24px;
     padding: 20px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: var(--strikebot-bg-card);
     border-radius: var(--strikebot-border-radius);
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--strikebot-border);
 }
 
 .strikebot-url-list {
@@ -804,12 +868,13 @@
     align-items: center;
     gap: 12px;
     padding: 10px 12px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--strikebot-border);
     transition: background 0.2s ease;
+    color: var(--strikebot-text-primary);
 }
 
 .strikebot-url-item:hover {
-    background: #fff;
+    background: var(--strikebot-bg-hover);
 }
 
 .strikebot-url-item:last-child {
@@ -867,7 +932,7 @@
 
 .strikebot-url-list::-webkit-scrollbar-track,
 .strikebot-modal-content::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: var(--strikebot-bg-secondary);
     border-radius: 4px;
 }
 
@@ -882,9 +947,20 @@
     background: var(--strikebot-orange-dark);
 }
 
-/* Table Improvements */
+/* Table Improvements - Dark Mode */
+.wp-list-table.widefat {
+    background: var(--strikebot-bg-card);
+    border-color: var(--strikebot-border);
+    color: var(--strikebot-text-primary);
+}
+
+.wp-list-table.widefat tbody tr {
+    background: var(--strikebot-bg-card);
+    color: var(--strikebot-text-primary);
+}
+
 .wp-list-table.widefat tbody tr:hover {
-    background: #f8fafc;
+    background: var(--strikebot-bg-hover);
 }
 
 .wp-list-table.widefat tbody td {
@@ -897,7 +973,9 @@
 .wp-list-table.widefat thead th {
     padding: 12px;
     font-weight: 600;
-    color: #334155;
+    color: var(--strikebot-text-primary);
+    background: var(--strikebot-bg-secondary);
+    border-color: var(--strikebot-border);
 }
 
 /* Responsive fixes */
