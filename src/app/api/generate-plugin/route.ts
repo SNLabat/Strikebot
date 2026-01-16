@@ -329,13 +329,17 @@ class Strikebot {
         $type = sanitize_text_field($_POST['type'] ?? '');
         // Only check limit for manual URL entries, not for sitemap crawls
         if ($type === 'url') {
-            $metadata = $_POST['metadata'] ?? '';
+            $metadata = isset($_POST['metadata']) ? $_POST['metadata'] : '';
             $is_from_sitemap = false;
             if (!empty($metadata)) {
                 $decoded = json_decode($metadata, true);
-                if ($decoded && isset($decoded['from_sitemap']) && $decoded['from_sitemap']) {
-                    $is_from_sitemap = true;
-                } elseif (strpos($metadata, 'sitemap') !== false) {
+                if ($decoded && is_array($decoded)) {
+                    $from_sitemap_key = 'from_sitemap';
+                    if (isset($decoded[$from_sitemap_key]) && $decoded[$from_sitemap_key]) {
+                        $is_from_sitemap = true;
+                    }
+                }
+                if (!$is_from_sitemap && strpos($metadata, 'sitemap') !== false) {
                     $is_from_sitemap = true;
                 }
             }
@@ -343,7 +347,7 @@ class Strikebot {
             if (!$is_from_sitemap) {
                 $link_limit = $settings['limits']['linkTrainingLimit'];
                 if ($link_limit !== null) {
-                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%' OR metadata NOT LIKE '%\"from_sitemap\":true%')");
+                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%')");
                     if ($link_count >= $link_limit) { wp_send_json_error(array('message' => 'Link training limit reached')); }
                 }
             }

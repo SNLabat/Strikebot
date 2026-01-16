@@ -484,15 +484,20 @@ class Strikebot {
         // Sitemap crawls should be unlimited
         if ($type === 'url') {
             // Check if this is from a sitemap crawl (has sitemap metadata)
-            $metadata = $_POST['metadata'] ?? '';
+            $metadata = isset($_POST['metadata']) ? $_POST['metadata'] : '';
             $is_from_sitemap = false;
             
             if (!empty($metadata)) {
                 // Try to decode JSON metadata
                 $decoded = json_decode($metadata, true);
-                if ($decoded && isset($decoded['from_sitemap']) && $decoded['from_sitemap']) {
-                    $is_from_sitemap = true;
-                } elseif (strpos($metadata, 'sitemap') !== false) {
+                if ($decoded && is_array($decoded)) {
+                    $from_sitemap_key = 'from_sitemap';
+                    if (isset($decoded[$from_sitemap_key]) && $decoded[$from_sitemap_key]) {
+                        $is_from_sitemap = true;
+                    }
+                }
+                // Also check if metadata contains 'sitemap' string
+                if (!$is_from_sitemap && strpos($metadata, 'sitemap') !== false) {
                     $is_from_sitemap = true;
                 }
             }
@@ -501,7 +506,7 @@ class Strikebot {
             if (!$is_from_sitemap) {
                 $link_limit = $settings['limits']['linkTrainingLimit'];
                 if ($link_limit !== null) {
-                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%' OR metadata NOT LIKE '%\"from_sitemap\":true%')");
+                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%')");
                     if ($link_count >= $link_limit) {
                         wp_send_json_error(array('message' => 'Link training limit reached'));
                     }
