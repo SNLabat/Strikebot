@@ -1,0 +1,436 @@
+/* Strikebot Widget Styles */
+
+.strikebot-widget {
+    --sb-primary: #3b82f6;
+    --sb-secondary: #1e40af;
+    --sb-bg: #ffffff;
+    --sb-text: #1f2937;
+    --sb-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+
+    position: fixed;
+    bottom: 20px;
+    z-index: 999999;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.strikebot-bottom-right {
+    right: 20px;
+}
+
+.strikebot-bottom-left {
+    left: 20px;
+}
+
+/* Toggle Button */
+.strikebot-toggle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--sb-primary);
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--sb-shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.strikebot-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.2);
+}
+
+.strikebot-toggle-icon {
+    width: 28px;
+    height: 28px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.strikebot-toggle-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.strikebot-toggle-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.strikebot-toggle-icon.hidden {
+    display: none;
+}
+
+/* Chat Window */
+.strikebot-chat {
+    position: absolute;
+    bottom: 80px;
+    width: 380px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 120px);
+    background: var(--sb-bg);
+    border-radius: 16px;
+    box-shadow: var(--sb-shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.strikebot-bottom-right .strikebot-chat {
+    right: 0;
+}
+
+.strikebot-bottom-left .strikebot-chat {
+    left: 0;
+}
+
+.strikebot-chat.hidden {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+    pointer-events: none;
+}
+
+/* Chat Header */
+.strikebot-chat-header {
+    background: var(--sb-primary);
+    color: #fff;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.strikebot-chat-avatar {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.strikebot-chat-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.strikebot-chat-avatar svg {
+    width: 24px;
+    height: 24px;
+}
+
+.strikebot-chat-info {
+    flex: 1;
+}
+
+.strikebot-chat-name {
+    display: block;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.strikebot-chat-status {
+    font-size: 13px;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.strikebot-chat-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+}
+
+.strikebot-chat-close {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.strikebot-chat-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.strikebot-chat-close svg {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+}
+
+/* Messages */
+.strikebot-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 300px;
+    max-height: 400px;
+}
+
+.strikebot-message {
+    display: flex;
+    gap: 10px;
+    max-width: 85%;
+    animation: messageIn 0.3s ease;
+}
+
+@keyframes messageIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.strikebot-message-bot {
+    align-self: flex-start;
+}
+
+.strikebot-message-user {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.strikebot-message-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--sb-primary);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.strikebot-message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.strikebot-message-avatar svg {
+    width: 16px;
+    height: 16px;
+    color: #fff;
+}
+
+.strikebot-message-user .strikebot-message-avatar {
+    display: none;
+}
+
+.strikebot-message-content {
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--sb-text);
+}
+
+.strikebot-message-bot .strikebot-message-content {
+    background: #f3f4f6;
+    border-bottom-left-radius: 4px;
+}
+
+.strikebot-dark .strikebot-message-bot .strikebot-message-content {
+    background: #374151;
+}
+
+.strikebot-message-user .strikebot-message-content {
+    background: var(--sb-primary);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+/* Typing Indicator */
+.strikebot-typing {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+}
+
+.strikebot-typing span {
+    width: 8px;
+    height: 8px;
+    background: #9ca3af;
+    border-radius: 50%;
+    animation: typing 1.4s infinite;
+}
+
+.strikebot-typing span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.strikebot-typing span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+    30% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+/* Chat Input */
+.strikebot-chat-input {
+    padding: 12px 16px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 10px;
+    background: var(--sb-bg);
+}
+
+.strikebot-dark .strikebot-chat-input {
+    border-top-color: #374151;
+}
+
+.strikebot-chat-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background: #f9fafb;
+    color: var(--sb-text);
+}
+
+.strikebot-dark .strikebot-chat-input input {
+    background: #374151;
+    border-color: #4b5563;
+}
+
+.strikebot-chat-input input:focus {
+    border-color: var(--sb-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.strikebot-chat-input input::placeholder {
+    color: #9ca3af;
+}
+
+#strikebot-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--sb-primary);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, background 0.2s ease;
+    flex-shrink: 0;
+}
+
+#strikebot-send:hover {
+    transform: scale(1.05);
+    background: var(--sb-secondary);
+}
+
+#strikebot-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+#strikebot-send svg {
+    width: 20px;
+    height: 20px;
+    color: #fff;
+}
+
+/* Powered By */
+.strikebot-powered-by {
+    text-align: center;
+    padding: 8px;
+    font-size: 11px;
+    color: #9ca3af;
+    border-top: 1px solid #e5e7eb;
+}
+
+.strikebot-dark .strikebot-powered-by {
+    border-top-color: #374151;
+}
+
+/* Dark Mode */
+.strikebot-dark {
+    --sb-bg: #1f2937;
+    --sb-text: #f9fafb;
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .strikebot-widget {
+        bottom: 10px;
+    }
+
+    .strikebot-bottom-right {
+        right: 10px;
+    }
+
+    .strikebot-bottom-left {
+        left: 10px;
+    }
+
+    .strikebot-chat {
+        width: calc(100vw - 20px);
+        max-height: calc(100vh - 100px);
+        bottom: 70px;
+    }
+
+    .strikebot-toggle {
+        width: 54px;
+        height: 54px;
+    }
+}
+
+/* Scrollbar */
+.strikebot-chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.strikebot-chat-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.strikebot-chat-messages::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.strikebot-chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
