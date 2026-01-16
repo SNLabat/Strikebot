@@ -558,38 +558,64 @@ class Strikebot {
     }
 
     public function get_knowledge() {
-        check_ajax_referer('strikebot_admin', 'nonce');
+        // Verify nonce
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'strikebot_admin')) {
+            wp_send_json_error(array('message' => 'Security check failed. Please refresh the page and try again.'));
+            return;
+        }
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error(array('message' => 'Unauthorized'));
+            wp_send_json_error(array('message' => 'You do not have permission to view this content.'));
+            return;
+        }
+
+        $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        
+        if ($id <= 0) {
+            wp_send_json_error(array('message' => 'Invalid ID provided: ' . $id));
+            return;
         }
 
         global $wpdb;
         $table = $wpdb->prefix . 'strikebot_knowledge';
-        $id = intval($_POST['id'] ?? 0);
 
+        // Get the item
         $item = $wpdb->get_row($wpdb->prepare(
             "SELECT id, name, content, type, metadata, created_at FROM $table WHERE id = %d",
             $id
         ));
 
         if (!$item) {
-            wp_send_json_error(array('message' => 'Item not found with ID: ' . $id));
+            // Check if table exists
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") === $table;
+            wp_send_json_error(array(
+                'message' => 'Item not found with ID: ' . $id,
+                'debug' => array(
+                    'table' => $table,
+                    'table_exists' => $table_exists
+                )
+            ));
+            return;
         }
 
-        // Get content - it should be in the database
+        // Get content
         $content = isset($item->content) ? $item->content : '';
+        $content_length = strlen($content);
+        
         if (empty($content)) {
-            $content = 'No content available. Content length: ' . (isset($item->content) ? strlen($item->content) : 0);
+            $content = '[No content stored for this item]';
         }
 
         wp_send_json_success(array(
             'name' => $item->name,
             'content' => $content,
             'type' => $item->type,
+            'id' => $item->id,
+            'created_at' => $item->created_at,
             'debug' => array(
-                'content_length' => strlen($content),
-                'has_content' => !empty($content)
+                'content_length' => $content_length,
+                'has_content' => $content_length > 0,
+                'item_id' => $item->id
             )
         ));
     }

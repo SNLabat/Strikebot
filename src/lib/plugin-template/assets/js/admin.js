@@ -381,9 +381,13 @@
         const $row = $(this).closest('tr');
         const name = $row.find('td:first').text();
 
+        console.log('Viewing item:', { id: id, name: name });
+        console.log('AJAX URL:', strikebotAdmin.ajaxUrl);
+        console.log('Nonce:', strikebotAdmin.nonce);
+
         // Show modal with loading state
         $('#modal-title').text(name);
-        $('#modal-content').html('<p>Loading...</p>');
+        $('#modal-content').html('<p>Loading content for ID: ' + id + '...</p>');
         $modal.removeClass('hidden');
 
         // Fetch content from server
@@ -395,36 +399,68 @@
                 nonce: strikebotAdmin.nonce,
                 id: id
             },
-            dataType: 'json',
             timeout: 30000,
-            success: function(response) {
-                console.log('View response:', response);
-                if (response && response.success && response.data) {
-                    const content = response.data.content || 'No content available';
-                    const itemName = response.data.name || name;
+            success: function(response, textStatus, xhr) {
+                console.log('Raw response:', xhr.responseText);
+                console.log('Parsed response:', response);
+                
+                // Handle WordPress returning 0 or -1 for failed AJAX
+                if (response === 0 || response === '0' || response === -1 || response === '-1') {
+                    $('#modal-content').html('<p style="color: red;"><strong>Error:</strong> AJAX endpoint not found or permission denied. Please regenerate and reinstall the plugin.</p>');
+                    return;
+                }
+                
+                // Try to parse if string
+                let data = response;
+                if (typeof response === 'string') {
+                    try {
+                        data = JSON.parse(response);
+                    } catch (e) {
+                        $('#modal-content').html('<p style="color: red;"><strong>Error:</strong> Invalid response format. Raw response: <code>' + response.substring(0, 500) + '</code></p>');
+                        return;
+                    }
+                }
+                
+                if (data && data.success && data.data) {
+                    const content = data.data.content || 'No content available';
+                    const itemName = data.data.name || name;
                     $('#modal-title').text(itemName);
                     // Escape HTML and preserve whitespace
                     const escapedContent = $('<div>').text(content).html();
-                    $('#modal-content').html('<pre style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; padding: 15px; background: #f5f5f5; border-radius: 4px;">' + escapedContent + '</pre>');
+                    const contentLength = content.length;
+                    $('#modal-content').html(
+                        '<p style="margin-bottom: 10px; color: #666; font-size: 12px;">Content length: ' + contentLength.toLocaleString() + ' characters</p>' +
+                        '<pre style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; padding: 15px; background: #f5f5f5; border-radius: 4px; font-size: 13px;">' + escapedContent + '</pre>'
+                    );
                 } else {
-                    const errorMsg = (response && response.data && response.data.message) ? response.data.message : 'Could not load content';
-                    console.error('Failed to load content:', response);
-                    $('#modal-content').html('<p style="color: red;">Error: ' + errorMsg + '</p>');
+                    const errorMsg = (data && data.data && data.data.message) ? data.data.message : 'Could not load content';
+                    console.error('Failed to load content:', data);
+                    $('#modal-content').html('<p style="color: red;"><strong>Error:</strong> ' + errorMsg + '</p><p style="font-size: 12px; color: #666;">Check browser console for details.</p>');
                 }
             },
             error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error, xhr.responseText);
-                let errorMsg = 'Please check console for details';
-                try {
-                    const response = JSON.parse(xhr.responseText);
-                    if (response && response.data && response.data.message) {
-                        errorMsg = response.data.message;
-                    }
-                } catch (e) {
-                    // If response isn't JSON, use the status/error
-                    errorMsg = error || status || 'Unknown error';
+                console.error('AJAX Error:', { status: status, error: error, responseText: xhr.responseText, statusCode: xhr.status });
+                let errorMsg = 'Request failed';
+                
+                if (xhr.status === 0) {
+                    errorMsg = 'Network error - check your connection';
+                } else if (xhr.status === 403) {
+                    errorMsg = 'Permission denied (403)';
+                } else if (xhr.status === 404) {
+                    errorMsg = 'AJAX endpoint not found (404)';
+                } else if (xhr.status === 500) {
+                    errorMsg = 'Server error (500) - check server logs';
+                } else if (status === 'timeout') {
+                    errorMsg = 'Request timed out';
+                } else {
+                    errorMsg = 'Error: ' + (error || status || 'Unknown');
                 }
-                $('#modal-content').html('<p style="color: red;">Error loading content: ' + errorMsg + '</p>');
+                
+                $('#modal-content').html(
+                    '<p style="color: red;"><strong>' + errorMsg + '</strong></p>' +
+                    '<p style="font-size: 12px; color: #666;">Status: ' + xhr.status + ' | ' + status + '</p>' +
+                    '<p style="font-size: 12px; color: #666;">This usually means you need to regenerate and reinstall the plugin.</p>'
+                );
             }
         });
     });

@@ -138,18 +138,27 @@ $link_limit = $settings['limits']['linkTrainingLimit'];
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($items as $item): ?>
+                        <?php foreach ($items as $item): 
+                            $content_length = strlen($item->content);
+                            $has_content = $content_length > 0;
+                            $preview = $has_content ? esc_attr(substr($item->content, 0, 100)) . ($content_length > 100 ? '...' : '') : 'No content';
+                        ?>
                         <tr data-id="<?php echo esc_attr($item->id); ?>">
-                            <td><?php echo esc_html($item->name); ?></td>
+                            <td>
+                                <?php echo esc_html($item->name); ?>
+                                <?php if (!$has_content): ?>
+                                <span style="color: red; font-size: 11px;"> (empty)</span>
+                                <?php endif; ?>
+                            </td>
                             <td>
                                 <span class="strikebot-badge strikebot-badge-<?php echo esc_attr($item->type); ?>">
                                     <?php echo esc_html(ucfirst($item->type)); ?>
                                 </span>
                             </td>
-                            <td><?php echo size_format(strlen($item->content)); ?></td>
+                            <td title="<?php echo $preview; ?>"><?php echo size_format($content_length); ?></td>
                             <td><?php echo human_time_diff(strtotime($item->created_at), current_time('timestamp')) . ' ago'; ?></td>
                             <td>
-                                <button class="button button-small strikebot-view-item" data-id="<?php echo esc_attr($item->id); ?>">View</button>
+                                <button class="button button-small strikebot-view-item" data-id="<?php echo esc_attr($item->id); ?>" title="Content: <?php echo $content_length; ?> bytes">View</button>
                                 <button class="button button-small button-link-delete strikebot-delete-item" data-id="<?php echo esc_attr($item->id); ?>">Delete</button>
                             </td>
                         </tr>

@@ -370,16 +370,25 @@ class Strikebot {
     }
 
     public function get_knowledge() {
-        check_ajax_referer('strikebot_admin', 'nonce');
-        if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
+        if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'strikebot_admin')) {
+            wp_send_json_error(array('message' => 'Security check failed. Please refresh the page.'));
+            return;
+        }
+        if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); return; }
         global $wpdb;
         $table = $wpdb->prefix . 'strikebot_knowledge';
         $id = intval($_POST['id'] ?? 0);
+        if ($id <= 0) { wp_send_json_error(array('message' => 'Invalid ID provided')); return; }
         $item = $wpdb->get_row($wpdb->prepare("SELECT id, name, content, type, metadata, created_at FROM $table WHERE id = %d", $id));
-        if (!$item) { wp_send_json_error(array('message' => 'Item not found with ID: ' . $id)); }
+        if (!$item) {
+            $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") === $table;
+            wp_send_json_error(array('message' => 'Item not found with ID: ' . $id, 'debug' => array('table' => $table, 'table_exists' => $table_exists)));
+            return;
+        }
         $content = isset($item->content) ? $item->content : '';
-        if (empty($content)) { $content = 'No content available. Content length: ' . (isset($item->content) ? strlen($item->content) : 0); }
-        wp_send_json_success(array('name' => $item->name, 'content' => $content, 'type' => $item->type, 'debug' => array('content_length' => strlen($content), 'has_content' => !empty($content))));
+        $content_length = strlen($content);
+        if (empty($content)) { $content = '[No content stored for this item]'; }
+        wp_send_json_success(array('name' => $item->name, 'content' => $content, 'type' => $item->type, 'id' => $item->id, 'debug' => array('content_length' => $content_length, 'has_content' => $content_length > 0)));
     }
 
     public function crawl_sitemap() {
