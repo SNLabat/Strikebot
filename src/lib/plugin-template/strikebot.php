@@ -471,55 +471,69 @@ class Strikebot {
         $limit_mb = $settings['limits']['storageLimitMB'] ?? 0.4;
         $limit_bytes = $limit_mb * 1024 * 1024;
 
-        $current_size = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $table");
-        $new_content = sanitize_textarea_field($_POST['content'] ?? '');
+        $current_size = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $table") ?: 0;
+        $new_content = isset($_POST['content']) ? $_POST['content'] : '';
+        
+        // Don't use sanitize_textarea_field for large content - it might truncate
+        // Only sanitize if content is reasonable size, otherwise trust it
+        if (strlen($new_content) < 50000) {
+            $new_content = sanitize_textarea_field($new_content);
+        } else {
+            // For large content, use wp_kses_post or wp_kses_data to remove dangerous HTML
+            $new_content = wp_kses_post($new_content);
+        }
 
-        if (($current_size + strlen($new_content)) > $limit_bytes) {
-            wp_send_json_error(array('message' => 'Storage limit exceeded'));
+        $new_size = strlen($new_content);
+        if (($current_size + $new_size) > $limit_bytes) {
+            $current_mb = round($current_size / 1024 / 1024, 2);
+            $limit_mb = round($limit_bytes / 1024 / 1024, 2);
+            wp_send_json_error(array(
+                'message' => 'Storage limit exceeded. Current: ' . $current_mb . ' MB, Limit: ' . $limit_mb . ' MB, New content: ' . round($new_size / 1024, 2) . ' KB'
+            ));
         }
 
         // Check link limit for URL types (but not for sitemap-crawled URLs)
         $type = sanitize_text_field($_POST['type'] ?? '');
-        // Only check limit for manual URL entries, not for sitemap crawls
-        // Sitemap crawls should be unlimited
-        if ($type === 'url') {
-            // Check if this is from a sitemap crawl (has sitemap metadata)
-            $metadata = isset($_POST['metadata']) ? $_POST['metadata'] : '';
-            $is_from_sitemap = false;
-            
-            if (!empty($metadata)) {
-                // Try to decode JSON metadata
-                $decoded = json_decode($metadata, true);
-                if ($decoded && is_array($decoded)) {
-                    $from_sitemap_key = 'from_sitemap';
-                    if (isset($decoded[$from_sitemap_key]) && $decoded[$from_sitemap_key]) {
-                        $is_from_sitemap = true;
-                    }
-                }
-                // Also check if metadata contains 'sitemap' string
-                if (!$is_from_sitemap && strpos($metadata, 'sitemap') !== false) {
-                    $is_from_sitemap = true;
-                }
+        // Skip link limit check entirely for sitemap crawls
+        // Check metadata BEFORE sanitizing to see if it's from sitemap
+        $metadata_raw = isset($_POST['metadata']) ? $_POST['metadata'] : '';
+        $is_from_sitemap = false;
+        
+        if (!empty($metadata_raw)) {
+            // Check if metadata indicates it's from a sitemap crawl
+            if (strpos($metadata_raw, 'from_sitemap') !== false || strpos($metadata_raw, 'sitemap') !== false) {
+                $is_from_sitemap = true;
             }
-            
-            // Only enforce limit if it's NOT from a sitemap crawl
-            if (!$is_from_sitemap) {
-                $link_limit = $settings['limits']['linkTrainingLimit'];
-                if ($link_limit !== null) {
-                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%')");
-                    if ($link_count >= $link_limit) {
-                        wp_send_json_error(array('message' => 'Link training limit reached'));
-                    }
+        }
+        
+        // Only check link limit for manual URL entries, not for sitemap crawls
+        if ($type === 'url' && !$is_from_sitemap) {
+            $link_limit = $settings['limits']['linkTrainingLimit'];
+            if ($link_limit !== null) {
+                $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR (metadata NOT LIKE '%sitemap%' AND metadata NOT LIKE '%from_sitemap%'))");
+                if ($link_count >= $link_limit) {
+                    wp_send_json_error(array('message' => 'Link training limit reached. Sitemap crawls bypass this limit.'));
                 }
             }
         }
 
-        $wpdb->insert($table, array(
+        // Don't sanitize metadata if it's JSON - just store it
+        $metadata_to_store = isset($_POST['metadata']) ? $_POST['metadata'] : '';
+        // Only sanitize if it's not JSON
+        if (!empty($metadata_to_store) && !(substr($metadata_to_store, 0, 1) === '{' && substr($metadata_to_store, -1) === '}')) {
+            $metadata_to_store = sanitize_text_field($metadata_to_store);
+        }
+        
+        $insert_result = $wpdb->insert($table, array(
             'type' => $type,
             'name' => sanitize_text_field($_POST['name'] ?? ''),
             'content' => $new_content,
-            'metadata' => sanitize_text_field($_POST['metadata'] ?? '')
+            'metadata' => $metadata_to_store
         ));
+        
+        if ($insert_result === false) {
+            wp_send_json_error(array('message' => 'Failed to save knowledge: ' . $wpdb->last_error));
+        }
 
         wp_send_json_success(array(
             'message' => 'Knowledge added',
@@ -555,18 +569,28 @@ class Strikebot {
         $id = intval($_POST['id'] ?? 0);
 
         $item = $wpdb->get_row($wpdb->prepare(
-            "SELECT * FROM $table WHERE id = %d",
+            "SELECT id, name, content, type, metadata, created_at FROM $table WHERE id = %d",
             $id
         ));
 
         if (!$item) {
-            wp_send_json_error(array('message' => 'Item not found'));
+            wp_send_json_error(array('message' => 'Item not found with ID: ' . $id));
+        }
+
+        // Get content - it should be in the database
+        $content = isset($item->content) ? $item->content : '';
+        if (empty($content)) {
+            $content = 'No content available. Content length: ' . (isset($item->content) ? strlen($item->content) : 0);
         }
 
         wp_send_json_success(array(
             'name' => $item->name,
-            'content' => $item->content ? $item->content : 'No content available',
-            'type' => $item->type
+            'content' => $content,
+            'type' => $item->type,
+            'debug' => array(
+                'content_length' => strlen($content),
+                'has_content' => !empty($content)
+            )
         ));
     }
 

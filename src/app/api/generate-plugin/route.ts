@@ -323,36 +323,40 @@ class Strikebot {
         $settings = get_option('strikebot_settings');
         $limit_mb = $settings['limits']['storageLimitMB'] ?? 0.4;
         $limit_bytes = $limit_mb * 1024 * 1024;
-        $current_size = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $table");
-        $new_content = sanitize_textarea_field($_POST['content'] ?? '');
-        if (($current_size + strlen($new_content)) > $limit_bytes) { wp_send_json_error(array('message' => 'Storage limit exceeded')); }
+        $current_size = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $table") ?: 0;
+        $new_content = isset($_POST['content']) ? $_POST['content'] : '';
+        if (strlen($new_content) < 50000) {
+            $new_content = sanitize_textarea_field($new_content);
+        } else {
+            $new_content = wp_kses_post($new_content);
+        }
+        $new_size = strlen($new_content);
+        if (($current_size + $new_size) > $limit_bytes) {
+            $current_mb = round($current_size / 1024 / 1024, 2);
+            $limit_mb = round($limit_bytes / 1024 / 1024, 2);
+            wp_send_json_error(array('message' => 'Storage limit exceeded. Current: ' . $current_mb . ' MB, Limit: ' . $limit_mb . ' MB, New content: ' . round($new_size / 1024, 2) . ' KB'));
+        }
         $type = sanitize_text_field($_POST['type'] ?? '');
-        // Only check limit for manual URL entries, not for sitemap crawls
-        if ($type === 'url') {
-            $metadata = isset($_POST['metadata']) ? $_POST['metadata'] : '';
-            $is_from_sitemap = false;
-            if (!empty($metadata)) {
-                $decoded = json_decode($metadata, true);
-                if ($decoded && is_array($decoded)) {
-                    $from_sitemap_key = 'from_sitemap';
-                    if (isset($decoded[$from_sitemap_key]) && $decoded[$from_sitemap_key]) {
-                        $is_from_sitemap = true;
-                    }
-                }
-                if (!$is_from_sitemap && strpos($metadata, 'sitemap') !== false) {
-                    $is_from_sitemap = true;
-                }
-            }
-            // Only enforce limit if it's NOT from a sitemap crawl
-            if (!$is_from_sitemap) {
-                $link_limit = $settings['limits']['linkTrainingLimit'];
-                if ($link_limit !== null) {
-                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%')");
-                    if ($link_count >= $link_limit) { wp_send_json_error(array('message' => 'Link training limit reached')); }
-                }
+        $metadata_raw = isset($_POST['metadata']) ? $_POST['metadata'] : '';
+        $is_from_sitemap = false;
+        if (!empty($metadata_raw)) {
+            if (strpos($metadata_raw, 'from_sitemap') !== false || strpos($metadata_raw, 'sitemap') !== false) {
+                $is_from_sitemap = true;
             }
         }
-        $wpdb->insert($table, array('type' => $type, 'name' => sanitize_text_field($_POST['name'] ?? ''), 'content' => $new_content, 'metadata' => sanitize_text_field($_POST['metadata'] ?? '')));
+        if ($type === 'url' && !$is_from_sitemap) {
+            $link_limit = $settings['limits']['linkTrainingLimit'];
+            if ($link_limit !== null) {
+                $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR (metadata NOT LIKE '%sitemap%' AND metadata NOT LIKE '%from_sitemap%'))");
+                if ($link_count >= $link_limit) { wp_send_json_error(array('message' => 'Link training limit reached. Sitemap crawls bypass this limit.')); }
+            }
+        }
+        $metadata_to_store = isset($_POST['metadata']) ? $_POST['metadata'] : '';
+        if (!empty($metadata_to_store) && !(substr($metadata_to_store, 0, 1) === '{' && substr($metadata_to_store, -1) === '}')) {
+            $metadata_to_store = sanitize_text_field($metadata_to_store);
+        }
+        $insert_result = $wpdb->insert($table, array('type' => $type, 'name' => sanitize_text_field($_POST['name'] ?? ''), 'content' => $new_content, 'metadata' => $metadata_to_store));
+        if ($insert_result === false) { wp_send_json_error(array('message' => 'Failed to save knowledge: ' . $wpdb->last_error)); }
         wp_send_json_success(array('message' => 'Knowledge added', 'id' => $wpdb->insert_id));
     }
 
@@ -371,9 +375,11 @@ class Strikebot {
         global $wpdb;
         $table = $wpdb->prefix . 'strikebot_knowledge';
         $id = intval($_POST['id'] ?? 0);
-        $item = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
-        if (!$item) { wp_send_json_error(array('message' => 'Item not found')); }
-        wp_send_json_success(array('name' => $item->name, 'content' => $item->content ? $item->content : 'No content available', 'type' => $item->type));
+        $item = $wpdb->get_row($wpdb->prepare("SELECT id, name, content, type, metadata, created_at FROM $table WHERE id = %d", $id));
+        if (!$item) { wp_send_json_error(array('message' => 'Item not found with ID: ' . $id)); }
+        $content = isset($item->content) ? $item->content : '';
+        if (empty($content)) { $content = 'No content available. Content length: ' . (isset($item->content) ? strlen($item->content) : 0); }
+        wp_send_json_success(array('name' => $item->name, 'content' => $content, 'type' => $item->type, 'debug' => array('content_length' => strlen($content), 'has_content' => !empty($content))));
     }
 
     public function crawl_sitemap() {

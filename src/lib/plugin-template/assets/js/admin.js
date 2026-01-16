@@ -78,6 +78,9 @@
         $btn.prop('disabled', true).text('Crawling ' + urls.length + ' URLs...');
 
         let processed = 0;
+        let saved = 0;
+        let failed = 0;
+        const errors = [];
 
         urls.forEach(function(url) {
             $.ajax({
@@ -104,22 +107,42 @@
                             },
                             success: function(saveResponse) {
                                 if (!saveResponse.success) {
+                                    failed++;
+                                    const errorMsg = saveResponse.data ? saveResponse.data.message : 'Unknown error';
+                                    errors.push(url + ': ' + errorMsg);
                                     console.error('Failed to save URL:', url, saveResponse.data);
+                                } else {
+                                    saved++;
+                                    console.log('Successfully saved URL:', url);
                                 }
                             },
                             error: function(xhr, status, error) {
+                                failed++;
+                                errors.push(url + ': ' + error);
                                 console.error('Error saving URL:', url, error);
                             }
                         });
                     } else {
+                        failed++;
+                        const errorMsg = response.data ? response.data.message : 'No content retrieved';
+                        errors.push(url + ': ' + errorMsg);
                         console.error('Failed to crawl URL:', url, response);
                     }
+                },
+                error: function(xhr, status, error) {
+                    failed++;
+                    errors.push(url + ': Crawl error - ' + error);
+                    console.error('Error crawling URL:', url, error);
                 },
                 complete: function() {
                     processed++;
                     if (processed === urls.length) {
                         $btn.prop('disabled', false).text('Crawl Selected URLs');
-                        alert('Crawled ' + urls.length + ' URLs successfully!');
+                        let message = 'Crawl complete! Saved: ' + saved + ', Failed: ' + failed + ' out of ' + urls.length + ' URLs.';
+                        if (failed > 0 && errors.length > 0) {
+                            message += '\n\nFirst few errors:\n' + errors.slice(0, 5).join('\n');
+                        }
+                        alert(message);
                         location.reload();
                     }
                 }
