@@ -14,7 +14,9 @@
 .strikebot-admin {
     max-width: 1400px;
     margin: 20px auto;
-    padding-right: 20px;
+    padding: 0 20px;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 .strikebot-admin h1 {
@@ -42,6 +44,10 @@
     margin-bottom: 24px;
     box-shadow: var(--strikebot-shadow-sm);
     transition: all 0.3s ease;
+    box-sizing: border-box;
+    overflow: visible;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .strikebot-card:hover {
@@ -57,6 +63,9 @@
     font-size: 18px;
     font-weight: 600;
     color: #1e293b;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
 }
 
 /* Dashboard Grid */
@@ -65,6 +74,7 @@
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;
     margin-bottom: 32px;
+    box-sizing: border-box;
 }
 
 .strikebot-stat {
@@ -80,6 +90,9 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: 8px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.2;
 }
 
 .strikebot-stat-label {
@@ -87,6 +100,8 @@
     font-size: 14px;
     margin-bottom: 16px;
     font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .strikebot-progress {
@@ -120,6 +135,13 @@
     padding: 10px;
     border-radius: 8px;
     transition: background 0.2s ease;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.strikebot-feature span:not(.dashicons) {
+    flex: 1;
+    min-width: 0;
 }
 
 .strikebot-feature:hover {
@@ -166,6 +188,10 @@
     font-weight: 500;
     font-size: 14px;
     box-shadow: var(--strikebot-shadow-sm);
+    box-sizing: border-box;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-align: center;
 }
 
 .strikebot-action-card:hover {
@@ -851,10 +877,56 @@
 .wp-list-table.widefat tbody td {
     padding: 12px;
     vertical-align: middle;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .wp-list-table.widefat thead th {
     padding: 12px;
     font-weight: 600;
     color: #334155;
+}
+
+/* Responsive fixes */
+@media (max-width: 782px) {
+    .strikebot-admin {
+        padding: 0 10px;
+    }
+    
+    .strikebot-dashboard {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .strikebot-stat-value {
+        font-size: 36px;
+    }
+    
+    .strikebot-actions-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .strikebot-card {
+        padding: 20px;
+    }
+}
+
+/* Ensure all text elements handle overflow properly */
+.strikebot-admin * {
+    box-sizing: border-box;
+}
+
+.strikebot-admin p,
+.strikebot-admin span:not(.dashicons):not(.strikebot-badge),
+.strikebot-admin div:not(.strikebot-progress) {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Button text wrapping */
+.strikebot-admin .button,
+.strikebot-admin button {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
