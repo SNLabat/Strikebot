@@ -178,3 +178,144 @@ $link_limit = $settings['limits']['linkTrainingLimit'];
         <div id="modal-content"></div>
     </div>
 </div>
+
+<!-- Debug Info (collapse by default) -->
+<div class="strikebot-card" style="margin-top: 20px;">
+    <details>
+        <summary style="cursor: pointer; font-weight: bold; padding: 10px;">Debug Info (click to expand)</summary>
+        <div style="padding: 15px; background: #f9f9f9; border-radius: 4px; margin-top: 10px;">
+            <p><strong>AJAX URL:</strong> <?php echo admin_url('admin-ajax.php'); ?></p>
+            <p><strong>Nonce:</strong> <?php echo wp_create_nonce('strikebot_admin'); ?></p>
+            <p><strong>Table:</strong> <?php echo $wpdb->prefix; ?>strikebot_knowledge</p>
+            <p><strong>Total Items:</strong> <?php echo count($items); ?></p>
+            <p><strong>Items with content:</strong> <?php 
+                $with_content = 0;
+                foreach ($items as $item) {
+                    if (strlen($item->content) > 0) $with_content++;
+                }
+                echo $with_content;
+            ?></p>
+            
+            <h4 style="margin-top: 15px;">Raw Database Content Preview:</h4>
+            <table class="widefat" style="font-size: 12px;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Content Length</th>
+                        <th>Content Preview (first 200 chars)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($items as $item): ?>
+                    <tr>
+                        <td><?php echo $item->id; ?></td>
+                        <td><?php echo esc_html(substr($item->name, 0, 30)); ?></td>
+                        <td><?php echo esc_html($item->type); ?></td>
+                        <td><?php echo strlen($item->content); ?> bytes</td>
+                        <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <?php echo esc_html(substr($item->content, 0, 200)); ?>
+                            <?php if (strlen($item->content) > 200) echo '...'; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            
+            <h4 style="margin-top: 15px;">Test AJAX Endpoints:</h4>
+            <button type="button" id="test-ajax-endpoint" class="button">Test get_knowledge Endpoint</button>
+            <button type="button" id="test-context-endpoint" class="button" style="margin-left: 10px;">Test Context Builder</button>
+            <div id="ajax-test-result" style="margin-top: 10px; padding: 10px; background: #fff; border: 1px solid #ddd; display: none;"></div>
+        </div>
+    </details>
+</div>
+
+<script>
+jQuery(document).ready(function($) {
+    $('#test-ajax-endpoint').on('click', function() {
+        var $result = $('#ajax-test-result');
+        $result.show().html('Testing...');
+        
+        // Get the first item ID
+        var firstId = $('tr[data-id]').first().data('id');
+        if (!firstId) {
+            $result.html('<span style="color: red;">No items to test with</span>');
+            return;
+        }
+        
+        console.log('Testing AJAX with ID:', firstId);
+        console.log('AJAX URL:', strikebotAdmin.ajaxUrl);
+        console.log('Nonce:', strikebotAdmin.nonce);
+        
+        $.ajax({
+            url: strikebotAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'strikebot_get_knowledge',
+                nonce: strikebotAdmin.nonce,
+                id: firstId
+            },
+            success: function(response) {
+                console.log('Test response:', response);
+                if (response === 0 || response === '0') {
+                    $result.html('<span style="color: red;"><strong>FAILED:</strong> Endpoint returned 0. The get_knowledge AJAX action is not registered. Please regenerate the plugin.</span>');
+                } else if (response && response.success) {
+                    var contentPreview = response.data.content ? response.data.content.substring(0, 200) : 'No content';
+                    $result.html('<span style="color: green;"><strong>SUCCESS!</strong></span><br>Name: ' + response.data.name + '<br>Content length: ' + (response.data.content ? response.data.content.length : 0) + '<br>Preview: ' + contentPreview);
+                } else {
+                    $result.html('<span style="color: red;"><strong>FAILED:</strong> ' + (response.data ? response.data.message : 'Unknown error') + '</span><br>Raw response: ' + JSON.stringify(response));
+                }
+            },
+            error: function(xhr, status, error) {
+                console.log('Test error:', xhr, status, error);
+                $result.html('<span style="color: red;"><strong>AJAX ERROR:</strong> ' + status + ' - ' + error + '</span><br>Response: ' + xhr.responseText);
+            }
+        });
+    });
+    
+    $('#test-context-endpoint').on('click', function() {
+        var $result = $('#ajax-test-result');
+        $result.show().html('Testing context builder...');
+        
+        $.ajax({
+            url: strikebotAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'strikebot_debug_context',
+                nonce: strikebotAdmin.nonce
+            },
+            success: function(response) {
+                console.log('Context debug response:', response);
+                if (response && response.success && response.data) {
+                    var d = response.data;
+                    var html = '<span style="color: green;"><strong>SUCCESS!</strong></span><br>';
+                    html += '<strong>Items in database:</strong> ' + d.items_count + '<br>';
+                    html += '<strong>Context length:</strong> ' + d.context_length + ' characters<br><br>';
+                    
+                    html += '<strong>Items breakdown:</strong><br>';
+                    if (d.items && d.items.length > 0) {
+                        d.items.forEach(function(item) {
+                            html += '- [' + item.type + '] ' + item.name + ': ' + item.content_length + ' bytes';
+                            if (item.content_length == 0) {
+                                html += ' <span style="color: red;">(EMPTY!)</span>';
+                            }
+                            html += '<br>';
+                        });
+                    }
+                    
+                    html += '<br><strong>Context preview (first 1000 chars):</strong><br>';
+                    html += '<pre style="background: #f5f5f5; padding: 10px; max-height: 300px; overflow: auto; white-space: pre-wrap;">' + (d.context_preview || 'No context built').substring(0, 1000) + '</pre>';
+                    
+                    $result.html(html);
+                } else {
+                    $result.html('<span style="color: red;"><strong>FAILED:</strong> ' + (response.data ? response.data.message : 'Unknown error') + '</span>');
+                }
+            },
+            error: function(xhr, status, error) {
+                $result.html('<span style="color: red;"><strong>AJAX ERROR:</strong> ' + status + ' - ' + error + '</span>');
+            }
+        });
+    });
+});
+</script>

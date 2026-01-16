@@ -98,6 +98,7 @@ class Strikebot {
         add_action('wp_ajax_strikebot_get_knowledge', array($this, 'get_knowledge'));
         add_action('wp_ajax_strikebot_crawl_sitemap', array($this, 'crawl_sitemap'));
         add_action('wp_ajax_strikebot_crawl_url', array($this, 'crawl_url'));
+        add_action('wp_ajax_strikebot_debug_context', array($this, 'debug_context'));
         add_action('wp_ajax_strikebot_clear_history', array($this, 'clear_history'));
         add_action('wp_ajax_strikebot_reset_knowledge', array($this, 'reset_knowledge'));
     }
@@ -244,27 +245,39 @@ class Strikebot {
         $table = $wpdb->prefix . 'strikebot_knowledge';
         $items = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC LIMIT 50");
         
-        // Limit context to ~15000 tokens to avoid exceeding API limits
-        // Approximate: 1 token ≈ 4 characters
-        $max_chars = 60000; // ~15000 tokens
+        $max_chars = 60000;
         $context = "";
+        $items_included = 0;
         
         foreach ($items as $item) {
-            $item_content = "\\n---\\n" . $item->content;
+            if (empty($item->content)) { continue; }
+            
+            $type_label = '';
+            switch ($item->type) {
+                case 'qa': $type_label = '[Q&A]'; break;
+                case 'url': $type_label = '[From webpage: ' . $item->name . ']'; break;
+                case 'file': $type_label = '[From document: ' . $item->name . ']'; break;
+                case 'text': $type_label = '[Information: ' . $item->name . ']'; break;
+                default: $type_label = '[' . ucfirst($item->type) . ': ' . $item->name . ']';
+            }
+            
+            $item_content = "\\n\\n---\\n" . $type_label . "\\n" . $item->content;
             $new_length = strlen($context) + strlen($item_content);
             
             if ($new_length > $max_chars) {
-                // Add partial content if there's room
                 $remaining = $max_chars - strlen($context);
-                if ($remaining > 100) { // Only add if there's meaningful space
+                if ($remaining > 100) {
                     $context .= substr($item_content, 0, $remaining);
+                    $items_included++;
                 }
                 break;
             }
             
             $context .= $item_content;
+            $items_included++;
         }
         
+        error_log('Strikebot: Built context with ' . $items_included . ' items, ' . strlen($context) . ' characters');
         return $context;
     }
 
@@ -438,6 +451,16 @@ class Strikebot {
         $text = preg_replace('/[ \\t]+/', ' ', $text);
         $text = preg_replace('/\\n\\s*\\n\\s*\\n+/', "\\n\\n", $text);
         return trim($text);
+    }
+
+    public function debug_context() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_knowledge';
+        $items = $wpdb->get_results("SELECT id, name, type, LENGTH(content) as content_length, LEFT(content, 500) as content_preview FROM $table ORDER BY created_at DESC");
+        $context = $this->get_knowledge_context('test query');
+        wp_send_json_success(array('items_count' => count($items), 'items' => $items, 'context_length' => strlen($context), 'context_preview' => substr($context, 0, 2000), 'full_context' => $context));
     }
 
     public function clear_history() {
