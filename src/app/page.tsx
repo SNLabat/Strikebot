@@ -1,0 +1,236 @@
+'use client';
+
+import { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { TIER_CONFIGS, AVAILABLE_MODELS, ChatbotConfig, TierName } from '@/types/chatbot';
+import TierSelector from '@/components/TierSelector';
+import ChatbotSettings from '@/components/ChatbotSettings';
+import ThemeCustomizer from '@/components/ThemeCustomizer';
+import WidgetSettings from '@/components/WidgetSettings';
+import PluginPreview from '@/components/PluginPreview';
+import { Download, Bot, Settings, Palette, MessageSquare, Eye } from 'lucide-react';
+
+export default function Home() {
+  const [activeTab, setActiveTab] = useState<'tier' | 'settings' | 'theme' | 'widget' | 'preview'>('tier');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [config, setConfig] = useState<ChatbotConfig>({
+    id: uuidv4(),
+    name: 'My Chatbot',
+    tier: 'free',
+    model: 'gpt-3.5-turbo',
+    apiKey: '',
+    apiEndpoint: 'https://api.openai.com/v1',
+    theme: {
+      primaryColor: '#3B82F6',
+      secondaryColor: '#1E40AF',
+      backgroundColor: '#FFFFFF',
+      textColor: '#1F2937',
+      mode: 'light',
+    },
+    widget: {
+      position: 'bottom-right',
+      welcomeMessage: 'Hello! How can I help you today?',
+      placeholder: 'Type your message...',
+      iconUrl: '',
+    },
+    limits: {
+      messageCreditsPerMonth: TIER_CONFIGS.free.features.messageCreditsPerMonth,
+      storageLimitMB: TIER_CONFIGS.free.features.storageLimitMB,
+      aiActionsPerAgent: TIER_CONFIGS.free.features.aiActionsPerAgent,
+      linkTrainingLimit: TIER_CONFIGS.free.features.linkTrainingLimit === 'unlimited'
+        ? null
+        : TIER_CONFIGS.free.features.linkTrainingLimit,
+    },
+    features: {
+      integrations: TIER_CONFIGS.free.features.integrations,
+      apiAccess: TIER_CONFIGS.free.features.apiAccess,
+      analytics: TIER_CONFIGS.free.features.analytics,
+      autoRetrain: TIER_CONFIGS.free.features.autoRetrain,
+      modelAccess: TIER_CONFIGS.free.features.modelAccess,
+    },
+    createdAt: new Date().toISOString(),
+  });
+
+  const handleTierChange = (tier: TierName) => {
+    const tierConfig = TIER_CONFIGS[tier];
+
+    // Reset model if current model is not available for the new tier
+    const availableModels = AVAILABLE_MODELS.filter(
+      m => tierConfig.features.modelAccess === 'advanced' || m.tier === 'limited'
+    );
+    const currentModelAvailable = availableModels.some(m => m.id === config.model);
+
+    setConfig({
+      ...config,
+      tier,
+      model: currentModelAvailable ? config.model : availableModels[0].id,
+      limits: {
+        messageCreditsPerMonth: tierConfig.features.messageCreditsPerMonth,
+        storageLimitMB: tierConfig.features.storageLimitMB,
+        aiActionsPerAgent: tierConfig.features.aiActionsPerAgent,
+        linkTrainingLimit: tierConfig.features.linkTrainingLimit === 'unlimited'
+          ? null
+          : tierConfig.features.linkTrainingLimit,
+      },
+      features: {
+        integrations: tierConfig.features.integrations,
+        apiAccess: tierConfig.features.apiAccess,
+        analytics: tierConfig.features.analytics,
+        autoRetrain: tierConfig.features.autoRetrain,
+        modelAccess: tierConfig.features.modelAccess,
+      },
+    });
+  };
+
+  const handleGeneratePlugin = async () => {
+    if (!config.apiKey) {
+      alert('Please enter an API key before generating the plugin.');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const response = await fetch('/api/generate-plugin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ config }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate plugin');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `strikebot-${config.name.toLowerCase().replace(/\s+/g, '-')}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error generating plugin:', error);
+      alert('Failed to generate plugin. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const tabs = [
+    { id: 'tier', label: 'Tier Selection', icon: Bot },
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'theme', label: 'Theme', icon: Palette },
+    { id: 'widget', label: 'Widget', icon: MessageSquare },
+    { id: 'preview', label: 'Preview', icon: Eye },
+  ] as const;
+
+  return (
+    <main className="min-h-screen">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-3">
+              <Bot className="w-8 h-8 text-blue-600" />
+              <h1 className="text-xl font-bold text-gray-900">Strikebot Builder</h1>
+            </div>
+            <button
+              onClick={handleGeneratePlugin}
+              disabled={isGenerating}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              {isGenerating ? 'Generating...' : 'Download Plugin'}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tab Navigation */}
+        <nav className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors flex-1 justify-center ${
+                  activeTab === tab.id
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                {tab.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Tab Content */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          {activeTab === 'tier' && (
+            <TierSelector
+              selectedTier={config.tier}
+              onTierChange={handleTierChange}
+            />
+          )}
+          {activeTab === 'settings' && (
+            <ChatbotSettings
+              config={config}
+              onConfigChange={setConfig}
+            />
+          )}
+          {activeTab === 'theme' && (
+            <ThemeCustomizer
+              config={config}
+              onConfigChange={setConfig}
+            />
+          )}
+          {activeTab === 'widget' && (
+            <WidgetSettings
+              config={config}
+              onConfigChange={setConfig}
+            />
+          )}
+          {activeTab === 'preview' && (
+            <PluginPreview config={config} />
+          )}
+        </div>
+
+        {/* Current Configuration Summary */}
+        <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuration Summary</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Tier</p>
+              <p className="font-medium text-gray-900">{TIER_CONFIGS[config.tier].displayName}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Model</p>
+              <p className="font-medium text-gray-900">
+                {AVAILABLE_MODELS.find(m => m.id === config.model)?.name || config.model}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Message Credits</p>
+              <p className="font-medium text-gray-900">{config.limits.messageCreditsPerMonth.toLocaleString()}/month</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Storage Limit</p>
+              <p className="font-medium text-gray-900">
+                {config.limits.storageLimitMB >= 1
+                  ? `${config.limits.storageLimitMB} MB`
+                  : `${config.limits.storageLimitMB * 1024} KB`}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
