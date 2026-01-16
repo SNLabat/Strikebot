@@ -327,11 +327,25 @@ class Strikebot {
         $new_content = sanitize_textarea_field($_POST['content'] ?? '');
         if (($current_size + strlen($new_content)) > $limit_bytes) { wp_send_json_error(array('message' => 'Storage limit exceeded')); }
         $type = sanitize_text_field($_POST['type'] ?? '');
-        if (in_array($type, array('url', 'sitemap'))) {
-            $link_limit = $settings['limits']['linkTrainingLimit'];
-            if ($link_limit !== null) {
-                $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type IN ('url', 'sitemap')");
-                if ($link_count >= $link_limit) { wp_send_json_error(array('message' => 'Link training limit reached')); }
+        // Only check limit for manual URL entries, not for sitemap crawls
+        if ($type === 'url') {
+            $metadata = $_POST['metadata'] ?? '';
+            $is_from_sitemap = false;
+            if (!empty($metadata)) {
+                $decoded = json_decode($metadata, true);
+                if ($decoded && isset($decoded['from_sitemap']) && $decoded['from_sitemap']) {
+                    $is_from_sitemap = true;
+                } elseif (strpos($metadata, 'sitemap') !== false) {
+                    $is_from_sitemap = true;
+                }
+            }
+            // Only enforce limit if it's NOT from a sitemap crawl
+            if (!$is_from_sitemap) {
+                $link_limit = $settings['limits']['linkTrainingLimit'];
+                if ($link_limit !== null) {
+                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%' OR metadata NOT LIKE '%\"from_sitemap\":true%')");
+                    if ($link_count >= $link_limit) { wp_send_json_error(array('message' => 'Link training limit reached')); }
+                }
             }
         }
         $wpdb->insert($table, array('type' => $type, 'name' => sanitize_text_field($_POST['name'] ?? ''), 'content' => $new_content, 'metadata' => sanitize_text_field($_POST['metadata'] ?? '')));
@@ -355,7 +369,7 @@ class Strikebot {
         $id = intval($_POST['id'] ?? 0);
         $item = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE id = %d", $id));
         if (!$item) { wp_send_json_error(array('message' => 'Item not found')); }
-        wp_send_json_success(array('name' => $item->name, 'content' => $item->content, 'type' => $item->type));
+        wp_send_json_success(array('name' => $item->name, 'content' => $item->content ? $item->content : 'No content available', 'type' => $item->type));
     }
 
     public function crawl_sitemap() {

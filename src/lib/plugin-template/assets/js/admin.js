@@ -90,7 +90,7 @@
                 },
                 success: function(response) {
                     if (response.success && response.data.content) {
-                        // Save the content
+                        // Save the content with metadata indicating it's from sitemap crawl
                         $.ajax({
                             url: strikebotAdmin.ajaxUrl,
                             method: 'POST',
@@ -99,7 +99,8 @@
                                 nonce: strikebotAdmin.nonce,
                                 type: 'url',
                                 name: url,
-                                content: response.data.content
+                                content: response.data.content,
+                                metadata: JSON.stringify({ from_sitemap: true, crawled_url: url })
                             },
                             success: function(saveResponse) {
                                 if (!saveResponse.success) {
@@ -374,18 +375,33 @@
             dataType: 'json',
             timeout: 30000,
             success: function(response) {
-                if (response.success && response.data) {
+                console.log('View response:', response);
+                if (response && response.success && response.data) {
                     const content = response.data.content || 'No content available';
-                    $('#modal-title').text(response.data.name || name);
-                    $('#modal-content').html('<pre style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; padding: 15px; background: #f5f5f5; border-radius: 4px;">' + $('<div>').text(content).html() + '</pre>');
+                    const itemName = response.data.name || name;
+                    $('#modal-title').text(itemName);
+                    // Escape HTML and preserve whitespace
+                    const escapedContent = $('<div>').text(content).html();
+                    $('#modal-content').html('<pre style="white-space: pre-wrap; max-height: 500px; overflow-y: auto; padding: 15px; background: #f5f5f5; border-radius: 4px;">' + escapedContent + '</pre>');
                 } else {
-                    const errorMsg = (response.data && response.data.message) ? response.data.message : 'Could not load content';
+                    const errorMsg = (response && response.data && response.data.message) ? response.data.message : 'Could not load content';
+                    console.error('Failed to load content:', response);
                     $('#modal-content').html('<p style="color: red;">Error: ' + errorMsg + '</p>');
                 }
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', status, error, xhr.responseText);
-                $('#modal-content').html('<p style="color: red;">Error loading content: ' + (error || 'Please check console for details') + '</p>');
+                let errorMsg = 'Please check console for details';
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response && response.data && response.data.message) {
+                        errorMsg = response.data.message;
+                    }
+                } catch (e) {
+                    // If response isn't JSON, use the status/error
+                    errorMsg = error || status || 'Unknown error';
+                }
+                $('#modal-content').html('<p style="color: red;">Error loading content: ' + errorMsg + '</p>');
             }
         });
     });

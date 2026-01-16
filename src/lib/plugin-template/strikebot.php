@@ -478,16 +478,33 @@ class Strikebot {
             wp_send_json_error(array('message' => 'Storage limit exceeded'));
         }
 
-        // Check link limit for URL types
+        // Check link limit for URL types (but not for sitemap-crawled URLs)
         $type = sanitize_text_field($_POST['type'] ?? '');
-        if (in_array($type, array('url', 'sitemap'))) {
-            $link_limit = $settings['limits']['linkTrainingLimit'];
-            if ($link_limit !== null) {
-                $link_count = $wpdb->get_var($wpdb->prepare(
-                    "SELECT COUNT(*) FROM $table WHERE type IN ('url', 'sitemap')"
-                ));
-                if ($link_count >= $link_limit) {
-                    wp_send_json_error(array('message' => 'Link training limit reached'));
+        // Only check limit for manual URL entries, not for sitemap crawls
+        // Sitemap crawls should be unlimited
+        if ($type === 'url') {
+            // Check if this is from a sitemap crawl (has sitemap metadata)
+            $metadata = $_POST['metadata'] ?? '';
+            $is_from_sitemap = false;
+            
+            if (!empty($metadata)) {
+                // Try to decode JSON metadata
+                $decoded = json_decode($metadata, true);
+                if ($decoded && isset($decoded['from_sitemap']) && $decoded['from_sitemap']) {
+                    $is_from_sitemap = true;
+                } elseif (strpos($metadata, 'sitemap') !== false) {
+                    $is_from_sitemap = true;
+                }
+            }
+            
+            // Only enforce limit if it's NOT from a sitemap crawl
+            if (!$is_from_sitemap) {
+                $link_limit = $settings['limits']['linkTrainingLimit'];
+                if ($link_limit !== null) {
+                    $link_count = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE type = 'url' AND (metadata IS NULL OR metadata NOT LIKE '%sitemap%' OR metadata NOT LIKE '%\"from_sitemap\":true%')");
+                    if ($link_count >= $link_limit) {
+                        wp_send_json_error(array('message' => 'Link training limit reached'));
+                    }
                 }
             }
         }
@@ -543,7 +560,7 @@ class Strikebot {
 
         wp_send_json_success(array(
             'name' => $item->name,
-            'content' => $item->content,
+            'content' => $item->content ? $item->content : 'No content available',
             'type' => $item->type
         ));
     }
