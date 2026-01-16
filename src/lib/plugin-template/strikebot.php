@@ -473,17 +473,21 @@ class Strikebot {
 
         $current_size = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $table") ?: 0;
         $new_content = isset($_POST['content']) ? $_POST['content'] : '';
+        $original_length = strlen($new_content);
         
-        // Don't use sanitize_textarea_field for large content - it might truncate
-        // Only sanitize if content is reasonable size, otherwise trust it
-        if (strlen($new_content) < 50000) {
-            $new_content = sanitize_textarea_field($new_content);
-        } else {
-            // For large content, use wp_kses_post or wp_kses_data to remove dangerous HTML
-            $new_content = wp_kses_post($new_content);
-        }
-
+        // For knowledge base content, we want to preserve the text as-is
+        // Only do basic security: remove null bytes and normalize line endings
+        $new_content = str_replace(chr(0), '', $new_content); // Remove null bytes
+        $new_content = str_replace("\r\n", "\n", $new_content); // Normalize line endings
+        $new_content = str_replace("\r", "\n", $new_content);
+        
+        // If content was completely empty after receiving, log it
         $new_size = strlen($new_content);
+        if ($new_size === 0 && $original_length > 0) {
+            wp_send_json_error(array(
+                'message' => 'Content was lost during processing. Original size: ' . $original_length . ' bytes'
+            ));
+        }
         if (($current_size + $new_size) > $limit_bytes) {
             $current_mb = round($current_size / 1024 / 1024, 2);
             $limit_mb = round($limit_bytes / 1024 / 1024, 2);
@@ -664,29 +668,71 @@ class Strikebot {
             wp_send_json_error(array('message' => 'URL is required'));
         }
 
-        $response = wp_remote_get($url);
+        $response = wp_remote_get($url, array(
+            'timeout' => 30,
+            'user-agent' => 'Mozilla/5.0 (compatible; Strikebot/1.0)'
+        ));
+        
         if (is_wp_error($response)) {
-            wp_send_json_error(array('message' => $response->get_error_message()));
+            wp_send_json_error(array('message' => 'Failed to fetch URL: ' . $response->get_error_message()));
+        }
+        
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code !== 200) {
+            wp_send_json_error(array('message' => 'URL returned status code: ' . $status_code));
         }
 
         $body = wp_remote_retrieve_body($response);
+        
+        if (empty($body)) {
+            wp_send_json_error(array('message' => 'No content received from URL'));
+        }
 
         // Extract text content
         $content = $this->extract_text_from_html($body);
+        
+        if (empty($content)) {
+            wp_send_json_error(array('message' => 'No text content could be extracted from page'));
+        }
 
-        wp_send_json_success(array('content' => $content));
+        wp_send_json_success(array(
+            'content' => $content,
+            'content_length' => strlen($content),
+            'url' => $url
+        ));
     }
 
     private function extract_text_from_html($html) {
         // Remove script and style elements
         $html = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $html);
         $html = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $html);
+        $html = preg_replace('/<noscript[^>]*>.*?<\/noscript>/is', '', $html);
+        $html = preg_replace('/<nav[^>]*>.*?<\/nav>/is', '', $html);
+        $html = preg_replace('/<header[^>]*>.*?<\/header>/is', '', $html);
+        $html = preg_replace('/<footer[^>]*>.*?<\/footer>/is', '', $html);
+        
+        // Try to get main content area if it exists
+        $main_content = '';
+        if (preg_match('/<main[^>]*>(.*?)<\/main>/is', $html, $matches)) {
+            $main_content = $matches[1];
+        } elseif (preg_match('/<article[^>]*>(.*?)<\/article>/is', $html, $matches)) {
+            $main_content = $matches[1];
+        } elseif (preg_match('/<div[^>]*(?:class|id)=["\'][^"\']*(?:content|main|body)[^"\']*["\'][^>]*>(.*?)<\/div>/is', $html, $matches)) {
+            $main_content = $matches[1];
+        }
+        
+        // Use main content if found, otherwise use full HTML
+        $text_html = !empty($main_content) ? $main_content : $html;
 
         // Convert to text
-        $text = strip_tags($html);
+        $text = strip_tags($text_html);
 
-        // Clean up whitespace
-        $text = preg_replace('/\s+/', ' ', $text);
+        // Decode HTML entities
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+
+        // Clean up whitespace but preserve paragraph breaks
+        $text = preg_replace('/[ \t]+/', ' ', $text); // Collapse horizontal whitespace
+        $text = preg_replace('/\n\s*\n\s*\n+/', "\n\n", $text); // Collapse multiple line breaks
         $text = trim($text);
 
         return $text;

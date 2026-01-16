@@ -325,16 +325,18 @@ class Strikebot {
         $limit_bytes = $limit_mb * 1024 * 1024;
         $current_size = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $table") ?: 0;
         $new_content = isset($_POST['content']) ? $_POST['content'] : '';
-        if (strlen($new_content) < 50000) {
-            $new_content = sanitize_textarea_field($new_content);
-        } else {
-            $new_content = wp_kses_post($new_content);
-        }
+        $original_length = strlen($new_content);
+        $new_content = str_replace(chr(0), '', $new_content);
+        $new_content = str_replace("\\r\\n", "\\n", $new_content);
+        $new_content = str_replace("\\r", "\\n", $new_content);
         $new_size = strlen($new_content);
+        if ($new_size === 0 && $original_length > 0) {
+            wp_send_json_error(array('message' => 'Content was lost during processing. Original size: ' . $original_length));
+        }
         if (($current_size + $new_size) > $limit_bytes) {
             $current_mb = round($current_size / 1024 / 1024, 2);
-            $limit_mb = round($limit_bytes / 1024 / 1024, 2);
-            wp_send_json_error(array('message' => 'Storage limit exceeded. Current: ' . $current_mb . ' MB, Limit: ' . $limit_mb . ' MB, New content: ' . round($new_size / 1024, 2) . ' KB'));
+            $limit_mb_display = round($limit_bytes / 1024 / 1024, 2);
+            wp_send_json_error(array('message' => 'Storage limit exceeded. Current: ' . $current_mb . ' MB, Limit: ' . $limit_mb_display . ' MB, New content: ' . round($new_size / 1024, 2) . ' KB'));
         }
         $type = sanitize_text_field($_POST['type'] ?? '');
         $metadata_raw = isset($_POST['metadata']) ? $_POST['metadata'] : '';
@@ -411,18 +413,30 @@ class Strikebot {
         if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
         $url = esc_url_raw($_POST['url'] ?? '');
         if (empty($url)) { wp_send_json_error(array('message' => 'URL is required')); }
-        $response = wp_remote_get($url);
-        if (is_wp_error($response)) { wp_send_json_error(array('message' => $response->get_error_message())); }
+        $response = wp_remote_get($url, array('timeout' => 30, 'user-agent' => 'Mozilla/5.0 (compatible; Strikebot/1.0)'));
+        if (is_wp_error($response)) { wp_send_json_error(array('message' => 'Failed to fetch URL: ' . $response->get_error_message())); }
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code !== 200) { wp_send_json_error(array('message' => 'URL returned status code: ' . $status_code)); }
         $body = wp_remote_retrieve_body($response);
+        if (empty($body)) { wp_send_json_error(array('message' => 'No content received from URL')); }
         $content = $this->extract_text_from_html($body);
-        wp_send_json_success(array('content' => $content));
+        if (empty($content)) { wp_send_json_error(array('message' => 'No text content could be extracted from page')); }
+        wp_send_json_success(array('content' => $content, 'content_length' => strlen($content), 'url' => $url));
     }
 
     private function extract_text_from_html($html) {
         $html = preg_replace('/<script[^>]*>.*?<\\/script>/is', '', $html);
         $html = preg_replace('/<style[^>]*>.*?<\\/style>/is', '', $html);
-        $text = strip_tags($html);
-        $text = preg_replace('/\\s+/', ' ', $text);
+        $html = preg_replace('/<noscript[^>]*>.*?<\\/noscript>/is', '', $html);
+        $html = preg_replace('/<nav[^>]*>.*?<\\/nav>/is', '', $html);
+        $main_content = '';
+        if (preg_match('/<main[^>]*>(.*?)<\\/main>/is', $html, $matches)) { $main_content = $matches[1]; }
+        elseif (preg_match('/<article[^>]*>(.*?)<\\/article>/is', $html, $matches)) { $main_content = $matches[1]; }
+        $text_html = !empty($main_content) ? $main_content : $html;
+        $text = strip_tags($text_html);
+        $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
+        $text = preg_replace('/[ \\t]+/', ' ', $text);
+        $text = preg_replace('/\\n\\s*\\n\\s*\\n+/', "\\n\\n", $text);
         return trim($text);
     }
 

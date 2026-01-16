@@ -75,79 +75,122 @@
         }
 
         const $btn = $(this);
-        $btn.prop('disabled', true).text('Crawling ' + urls.length + ' URLs...');
+        $btn.prop('disabled', true).text('Crawling 0/' + urls.length + ' URLs...');
 
-        let processed = 0;
+        let completed = 0;
         let saved = 0;
         let failed = 0;
         const errors = [];
-
-        urls.forEach(function(url) {
+        
+        function updateStatus() {
+            $btn.text('Processing ' + completed + '/' + urls.length + ' (Saved: ' + saved + ', Failed: ' + failed + ')');
+        }
+        
+        function checkComplete() {
+            if (completed === urls.length) {
+                $btn.prop('disabled', false).text('Crawl Selected URLs');
+                let message = 'Crawl complete!\n\nSaved: ' + saved + '\nFailed: ' + failed + '\nTotal: ' + urls.length;
+                if (failed > 0 && errors.length > 0) {
+                    message += '\n\nErrors:\n' + errors.slice(0, 10).join('\n');
+                }
+                alert(message);
+                if (saved > 0) {
+                    location.reload();
+                }
+            }
+        }
+        
+        // Process URLs sequentially to avoid overwhelming the server
+        function processUrl(index) {
+            if (index >= urls.length) {
+                return;
+            }
+            
+            const url = urls[index];
+            console.log('Crawling URL ' + (index + 1) + '/' + urls.length + ':', url);
+            
             $.ajax({
                 url: strikebotAdmin.ajaxUrl,
                 method: 'POST',
+                timeout: 30000,
                 data: {
                     action: 'strikebot_crawl_url',
                     nonce: strikebotAdmin.nonce,
                     url: url
                 },
                 success: function(response) {
-                    if (response.success && response.data.content) {
-                        // Save the content with metadata indicating it's from sitemap crawl
+                    console.log('Crawl response for', url, ':', response);
+                    
+                    if (response && response.success && response.data && response.data.content) {
+                        const content = response.data.content;
+                        console.log('Content length for', url, ':', content.length);
+                        
+                        // Save the content
                         $.ajax({
                             url: strikebotAdmin.ajaxUrl,
                             method: 'POST',
+                            timeout: 60000,
                             data: {
                                 action: 'strikebot_save_knowledge',
                                 nonce: strikebotAdmin.nonce,
                                 type: 'url',
                                 name: url,
-                                content: response.data.content,
-                                metadata: JSON.stringify({ from_sitemap: true, crawled_url: url })
+                                content: content,
+                                metadata: JSON.stringify({ from_sitemap: true, crawled_url: url, content_length: content.length })
                             },
                             success: function(saveResponse) {
-                                if (!saveResponse.success) {
-                                    failed++;
-                                    const errorMsg = saveResponse.data ? saveResponse.data.message : 'Unknown error';
-                                    errors.push(url + ': ' + errorMsg);
-                                    console.error('Failed to save URL:', url, saveResponse.data);
-                                } else {
+                                console.log('Save response for', url, ':', saveResponse);
+                                
+                                if (saveResponse && saveResponse.success) {
                                     saved++;
-                                    console.log('Successfully saved URL:', url);
+                                    console.log('Successfully saved:', url);
+                                } else {
+                                    failed++;
+                                    const errorMsg = (saveResponse && saveResponse.data && saveResponse.data.message) ? saveResponse.data.message : 'Unknown save error';
+                                    errors.push(url + ': ' + errorMsg);
+                                    console.error('Save failed for', url, ':', errorMsg);
                                 }
                             },
                             error: function(xhr, status, error) {
                                 failed++;
-                                errors.push(url + ': ' + error);
-                                console.error('Error saving URL:', url, error);
+                                errors.push(url + ': Save error - ' + (error || status));
+                                console.error('Save AJAX error for', url, ':', status, error);
+                            },
+                            complete: function() {
+                                completed++;
+                                updateStatus();
+                                checkComplete();
+                                // Process next URL
+                                processUrl(index + 1);
                             }
                         });
                     } else {
                         failed++;
-                        const errorMsg = response.data ? response.data.message : 'No content retrieved';
+                        const errorMsg = (response && response.data && response.data.message) ? response.data.message : 'No content retrieved';
                         errors.push(url + ': ' + errorMsg);
-                        console.error('Failed to crawl URL:', url, response);
+                        console.error('Crawl failed for', url, ':', errorMsg);
+                        completed++;
+                        updateStatus();
+                        checkComplete();
+                        processUrl(index + 1);
                     }
                 },
                 error: function(xhr, status, error) {
                     failed++;
-                    errors.push(url + ': Crawl error - ' + error);
-                    console.error('Error crawling URL:', url, error);
-                },
-                complete: function() {
-                    processed++;
-                    if (processed === urls.length) {
-                        $btn.prop('disabled', false).text('Crawl Selected URLs');
-                        let message = 'Crawl complete! Saved: ' + saved + ', Failed: ' + failed + ' out of ' + urls.length + ' URLs.';
-                        if (failed > 0 && errors.length > 0) {
-                            message += '\n\nFirst few errors:\n' + errors.slice(0, 5).join('\n');
-                        }
-                        alert(message);
-                        location.reload();
-                    }
+                    errors.push(url + ': Crawl error - ' + (error || status));
+                    console.error('Crawl AJAX error for', url, ':', status, error);
+                    completed++;
+                    updateStatus();
+                    checkComplete();
+                    processUrl(index + 1);
                 }
             });
-        });
+        }
+        
+        // Start processing - do 3 URLs in parallel for speed
+        processUrl(0);
+        processUrl(1);
+        processUrl(2);
     });
 
     // URL form
@@ -225,6 +268,20 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             const content = e.target.result;
+            
+            console.log('File content loaded:', {
+                name: name,
+                contentLength: content.length,
+                contentPreview: content.substring(0, 200)
+            });
+
+            if (!content || content.length === 0) {
+                alert('Error: File appears to be empty');
+                $btn.prop('disabled', false).text(originalText);
+                return;
+            }
+
+            $btn.text('Saving ' + Math.round(content.length / 1024) + ' KB...');
 
             $.ajax({
                 url: strikebotAdmin.ajaxUrl,
@@ -237,24 +294,50 @@
                     content: content,
                     metadata: JSON.stringify({
                         fileType: file.type,
-                        fileSize: file.size
+                        fileSize: file.size,
+                        originalLength: content.length
                     })
                 },
-                success: function(response) {
-                    if (response.success) {
-                        alert('File uploaded successfully!');
+                timeout: 60000, // 60 second timeout for large files
+                success: function(response, textStatus, xhr) {
+                    console.log('Save response:', response);
+                    
+                    if (response === 0 || response === '0') {
+                        alert('Error: AJAX endpoint not found. Please regenerate and reinstall the plugin.');
+                        return;
+                    }
+                    
+                    if (response && response.success) {
+                        alert('File uploaded successfully! ID: ' + (response.data ? response.data.id : 'unknown'));
                         location.reload();
                     } else {
-                        alert(response.data.message || 'Error uploading file');
+                        const errorMsg = (response && response.data && response.data.message) ? response.data.message : 'Unknown error saving file';
+                        alert('Error: ' + errorMsg);
+                        console.error('Save failed:', response);
                     }
                 },
-                error: function() {
-                    alert('Error uploading file');
+                error: function(xhr, status, error) {
+                    console.error('AJAX error saving file:', { status: status, error: error, response: xhr.responseText });
+                    let errorMsg = 'Error uploading file: ';
+                    if (status === 'timeout') {
+                        errorMsg += 'Request timed out. File may be too large.';
+                    } else if (xhr.status === 413) {
+                        errorMsg += 'File too large. Server rejected the upload.';
+                    } else {
+                        errorMsg += (error || status || 'Unknown error');
+                    }
+                    alert(errorMsg);
                 },
                 complete: function() {
                     $btn.prop('disabled', false).text(originalText);
                 }
             });
+        };
+        
+        reader.onerror = function(e) {
+            console.error('FileReader error:', e);
+            alert('Error reading file. Please try again.');
+            $btn.prop('disabled', false).text(originalText);
         };
 
         reader.readAsText(file);
