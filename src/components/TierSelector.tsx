@@ -13,8 +13,8 @@ export default function TierSelector({ selectedTier, onTierChange }: TierSelecto
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Select a Tier</h2>
-      <p className="text-gray-600 mb-8">
+      <h2 className="text-2xl font-bold text-white mb-2">Select a Tier</h2>
+      <p className="text-slate-400 mb-8">
         Choose a tier to configure the chatbot&apos;s limits and features. These settings will be locked into the WordPress plugin.
       </p>
 
@@ -25,30 +25,30 @@ export default function TierSelector({ selectedTier, onTierChange }: TierSelecto
             onClick={() => onTierChange(tier.name)}
             className={`relative cursor-pointer rounded-xl border-2 p-6 transition-all ${
               selectedTier === tier.name
-                ? 'border-blue-600 bg-blue-50 shadow-lg'
-                : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                ? 'border-purple-500 bg-gradient-to-br from-purple-500/20 to-pink-500/20 shadow-lg shadow-purple-500/50'
+                : 'border-slate-600 bg-slate-700/30 hover:border-slate-500 hover:shadow-md'
             }`}
           >
             {selectedTier === tier.name && (
-              <div className="absolute -top-3 -right-3 w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+              <div className="absolute -top-3 -right-3 w-6 h-6 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
                 <Check className="w-4 h-4 text-white" />
               </div>
             )}
 
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">{tier.displayName}</h3>
+            <h3 className="text-lg font-semibold text-white mb-1">{tier.displayName}</h3>
             <div className="mb-4">
-              <span className="text-3xl font-bold text-gray-900">${tier.price}</span>
-              <span className="text-gray-500">/month</span>
+              <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">${tier.price}</span>
+              <span className="text-slate-400">/month</span>
             </div>
 
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>{tier.features.messageCreditsPerMonth.toLocaleString()} message credits/month</span>
+                <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <span className="text-slate-300">{tier.features.messageCreditsPerMonth.toLocaleString()} message credits/month</span>
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>
+                <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <span className="text-slate-300">
                   {tier.features.storageLimitMB >= 1
                     ? `${tier.features.storageLimitMB} MB per AI agent`
                     : `${tier.features.storageLimitMB * 1024} KB per AI agent`}
@@ -57,19 +57,19 @@ export default function TierSelector({ selectedTier, onTierChange }: TierSelecto
               <li className="flex items-start gap-2">
                 {tier.features.aiActionsPerAgent > 0 ? (
                   <>
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>{tier.features.aiActionsPerAgent} AI Actions per agent</span>
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-300">{tier.features.aiActionsPerAgent} AI Actions per agent</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-400">No AI Actions</span>
+                    <X className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-500">No AI Actions</span>
                   </>
                 )}
               </li>
               <li className="flex items-start gap-2">
-                <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                <span>
+                <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                <span className="text-slate-300">
                   {tier.features.linkTrainingLimit === 'unlimited'
                     ? 'Unlimited training links'
                     : `${tier.features.linkTrainingLimit} training links`}
@@ -78,70 +78,70 @@ export default function TierSelector({ selectedTier, onTierChange }: TierSelecto
               <li className="flex items-start gap-2">
                 {tier.features.integrations ? (
                   <>
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Integrations available</span>
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-300">Integrations available</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-400">No integrations</span>
+                    <X className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-500">No integrations</span>
                   </>
                 )}
               </li>
               <li className="flex items-start gap-2">
                 {tier.features.apiAccess ? (
                   <>
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>API access</span>
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-300">API access</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-400">No API access</span>
+                    <X className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-500">No API access</span>
                   </>
                 )}
               </li>
               <li className="flex items-start gap-2">
                 {tier.features.analytics !== 'none' ? (
                   <>
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span className="capitalize">{tier.features.analytics} analytics</span>
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-300 capitalize">{tier.features.analytics} analytics</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-400">No analytics</span>
+                    <X className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-500">No analytics</span>
                   </>
                 )}
               </li>
               <li className="flex items-start gap-2">
                 {tier.features.autoRetrain ? (
                   <>
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Auto retrain agents</span>
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-300">Auto retrain agents</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-400">Manual retraining only</span>
+                    <X className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-500">Manual retraining only</span>
                   </>
                 )}
               </li>
               <li className="flex items-start gap-2">
                 {tier.features.modelAccess === 'advanced' ? (
                   <>
-                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    <span>Access to advanced models</span>
+                    <Check className="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-300">Access to advanced models</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-gray-400">Limited model access</span>
+                    <X className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-slate-500">Limited model access</span>
                   </>
                 )}
               </li>
               {tier.features.inactivityDeletionDays && (
-                <li className="flex items-start gap-2 text-amber-600">
+                <li className="flex items-start gap-2 text-amber-400">
                   <span className="text-xs">
                     Agent deleted after {tier.features.inactivityDeletionDays} days of inactivity
                   </span>

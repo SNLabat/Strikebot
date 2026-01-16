@@ -337,9 +337,25 @@ class Strikebot {
 
         $items = $wpdb->get_results("SELECT * FROM $table ORDER BY created_at DESC LIMIT 50");
 
+        // Limit context to ~15000 tokens to avoid exceeding API limits
+        // Approximate: 1 token ≈ 4 characters
+        $max_chars = 60000; // ~15000 tokens
         $context = "";
+        
         foreach ($items as $item) {
-            $context .= "\n---\n" . $item->content;
+            $item_content = "\n---\n" . $item->content;
+            $new_length = strlen($context) + strlen($item_content);
+            
+            if ($new_length > $max_chars) {
+                // Add partial content if there's room
+                $remaining = $max_chars - strlen($context);
+                if ($remaining > 100) { // Only add if there's meaningful space
+                    $context .= substr($item_content, 0, $remaining);
+                }
+                break;
+            }
+            
+            $context .= $item_content;
         }
 
         return $context;

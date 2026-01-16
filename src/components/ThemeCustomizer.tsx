@@ -58,8 +58,8 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Theme Customization</h2>
-      <p className="text-gray-600 mb-8">
+      <h2 className="text-2xl font-bold text-white mb-2">Theme Customization</h2>
+      <p className="text-slate-400 mb-8">
         Customize the appearance of your chatbot widget. Users can also change these settings in WordPress after installation.
       </p>
 
@@ -68,7 +68,7 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
         <div className="space-y-6">
           {/* Mode Toggle */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-3 block">Display Mode</label>
+            <label className="text-sm font-medium text-slate-300 mb-3 block">Display Mode</label>
             <div className="flex gap-2">
               <button
                 onClick={() => updateTheme({
@@ -78,8 +78,8 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
                 })}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                   config.theme.mode === 'light'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-purple-500 bg-purple-500/20 text-white'
+                    : 'border-slate-600 bg-slate-700/30 text-slate-300 hover:border-slate-500'
                 }`}
               >
                 <Sun className="w-4 h-4" />
@@ -93,8 +93,8 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
                 })}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
                   config.theme.mode === 'dark'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-purple-500 bg-purple-500/20 text-white'
+                    : 'border-slate-600 bg-slate-700/30 text-slate-300 hover:border-slate-500'
                 }`}
               >
                 <Moon className="w-4 h-4" />
@@ -105,13 +105,13 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
 
           {/* Preset Themes */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-3 block">Preset Themes</label>
+            <label className="text-sm font-medium text-slate-300 mb-3 block">Preset Themes</label>
             <div className="flex flex-wrap gap-2">
               {presetThemes.map((preset) => (
                 <button
                   key={preset.name}
                   onClick={() => applyPreset(preset)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:border-gray-300 transition-all"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-600 bg-slate-700/30 text-slate-300 hover:border-slate-500 hover:text-white transition-all"
                 >
                   <div
                     className="w-4 h-4 rounded-full"
@@ -125,7 +125,7 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
 
           {/* Primary Color */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Primary Color</label>
+            <label className="text-sm font-medium text-slate-300 mb-2 block">Primary Color</label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
@@ -137,64 +137,64 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
                 type="text"
                 value={config.theme.primaryColor}
                 onChange={(e) => updateTheme({ primaryColor: e.target.value })}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg uppercase"
+                className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg uppercase text-white"
               />
             </div>
           </div>
 
           {/* Secondary Color */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Secondary Color</label>
+            <label className="text-sm font-medium text-slate-300 mb-2 block">Secondary Color</label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
                 value={config.theme.secondaryColor}
                 onChange={(e) => updateTheme({ secondaryColor: e.target.value })}
-                className="w-12 h-12 rounded-lg cursor-pointer border border-gray-300"
+                className="w-12 h-12 rounded-lg cursor-pointer border border-slate-600"
               />
               <input
                 type="text"
                 value={config.theme.secondaryColor}
                 onChange={(e) => updateTheme({ secondaryColor: e.target.value })}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg uppercase"
+                className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg uppercase text-white"
               />
             </div>
           </div>
 
           {/* Background Color */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Background Color</label>
+            <label className="text-sm font-medium text-slate-300 mb-2 block">Background Color</label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
                 value={config.theme.backgroundColor}
                 onChange={(e) => updateTheme({ backgroundColor: e.target.value })}
-                className="w-12 h-12 rounded-lg cursor-pointer border border-gray-300"
+                className="w-12 h-12 rounded-lg cursor-pointer border border-slate-600"
               />
               <input
                 type="text"
                 value={config.theme.backgroundColor}
                 onChange={(e) => updateTheme({ backgroundColor: e.target.value })}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg uppercase"
+                className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg uppercase text-white"
               />
             </div>
           </div>
 
           {/* Text Color */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">Text Color</label>
+            <label className="text-sm font-medium text-slate-300 mb-2 block">Text Color</label>
             <div className="flex items-center gap-3">
               <input
                 type="color"
                 value={config.theme.textColor}
                 onChange={(e) => updateTheme({ textColor: e.target.value })}
-                className="w-12 h-12 rounded-lg cursor-pointer border border-gray-300"
+                className="w-12 h-12 rounded-lg cursor-pointer border border-slate-600"
               />
               <input
                 type="text"
                 value={config.theme.textColor}
                 onChange={(e) => updateTheme({ textColor: e.target.value })}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg uppercase"
+                className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg uppercase text-white"
               />
             </div>
           </div>
@@ -202,7 +202,7 @@ export default function ThemeCustomizer({ config, onConfigChange }: ThemeCustomi
 
         {/* Preview */}
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-3 block">Preview</label>
+          <label className="text-sm font-medium text-slate-300 mb-3 block">Preview</label>
           <div
             className="rounded-xl p-4 h-96 flex flex-col"
             style={{

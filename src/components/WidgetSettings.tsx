@@ -18,8 +18,8 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Widget Settings</h2>
-      <p className="text-gray-600 mb-8">
+      <h2 className="text-2xl font-bold text-white mb-2">Widget Settings</h2>
+      <p className="text-slate-400 mb-8">
         Configure how the chatbot widget appears and behaves on the website. These are default settings - users can customize them in WordPress.
       </p>
 
@@ -28,39 +28,39 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
         <div className="space-y-6">
           {/* Welcome Message */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2">
               <MessageSquare className="w-4 h-4" />
               Welcome Message
             </label>
             <textarea
               value={config.widget.welcomeMessage}
               onChange={(e) => updateWidget({ welcomeMessage: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
               rows={3}
               placeholder="Hello! How can I help you today?"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               This message is shown when users first open the chat
             </p>
           </div>
 
           {/* Placeholder Text */}
           <div>
-            <label className="text-sm font-medium text-gray-700 mb-2 block">
+            <label className="text-sm font-medium text-slate-300 mb-2 block">
               Input Placeholder
             </label>
             <input
               type="text"
               value={config.widget.placeholder}
               onChange={(e) => updateWidget({ placeholder: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
               placeholder="Type your message..."
             />
           </div>
 
           {/* Position */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-3">
               <MapPin className="w-4 h-4" />
               Widget Position
             </label>
@@ -69,38 +69,38 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
                 onClick={() => updateWidget({ position: 'bottom-right' })}
                 className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
                   config.widget.position === 'bottom-right'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-purple-500 bg-purple-500/20'
+                    : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-16 h-10 border border-gray-300 rounded relative bg-white">
-                    <div className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-blue-600" />
+                  <div className="w-16 h-10 border border-slate-500 rounded relative bg-slate-800">
+                    <div className="absolute bottom-1 right-1 w-3 h-3 rounded-full bg-purple-500" />
                   </div>
                 </div>
-                <p className="text-sm mt-2 text-center">Bottom Right</p>
+                <p className="text-sm mt-2 text-center text-slate-300">Bottom Right</p>
               </button>
               <button
                 onClick={() => updateWidget({ position: 'bottom-left' })}
                 className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${
                   config.widget.position === 'bottom-left'
-                    ? 'border-blue-600 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-purple-500 bg-purple-500/20'
+                    : 'border-slate-600 bg-slate-700/30 hover:border-slate-500'
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-16 h-10 border border-gray-300 rounded relative bg-white">
-                    <div className="absolute bottom-1 left-1 w-3 h-3 rounded-full bg-blue-600" />
+                  <div className="w-16 h-10 border border-slate-500 rounded relative bg-slate-800">
+                    <div className="absolute bottom-1 left-1 w-3 h-3 rounded-full bg-purple-500" />
                   </div>
                 </div>
-                <p className="text-sm mt-2 text-center">Bottom Left</p>
+                <p className="text-sm mt-2 text-center text-slate-300">Bottom Left</p>
               </button>
             </div>
           </div>
 
           {/* Custom Icon URL */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-300 mb-2">
               <ImageIcon className="w-4 h-4" />
               Custom Icon URL (Optional)
             </label>
@@ -108,10 +108,10 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
               type="url"
               value={config.widget.iconUrl}
               onChange={(e) => updateWidget({ iconUrl: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-white placeholder:text-slate-400"
               placeholder="https://example.com/icon.png"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-slate-400 mt-1">
               Leave empty to use the default icon. In WordPress, users can select an icon from the media library.
             </p>
           </div>
@@ -119,20 +119,20 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
 
         {/* Preview */}
         <div>
-          <label className="text-sm font-medium text-gray-700 mb-3 block">Widget Preview</label>
-          <div className="relative bg-gray-100 rounded-xl h-96 overflow-hidden">
+          <label className="text-sm font-medium text-slate-300 mb-3 block">Widget Preview</label>
+          <div className="relative bg-slate-800 rounded-xl h-96 overflow-hidden">
             {/* Fake website content */}
             <div className="p-4">
-              <div className="h-8 w-48 bg-gray-300 rounded mb-4" />
+              <div className="h-8 w-48 bg-slate-700 rounded mb-4" />
               <div className="space-y-2">
-                <div className="h-4 w-full bg-gray-200 rounded" />
-                <div className="h-4 w-5/6 bg-gray-200 rounded" />
-                <div className="h-4 w-4/6 bg-gray-200 rounded" />
+                <div className="h-4 w-full bg-slate-700 rounded" />
+                <div className="h-4 w-5/6 bg-slate-700 rounded" />
+                <div className="h-4 w-4/6 bg-slate-700 rounded" />
               </div>
               <div className="mt-6 grid grid-cols-3 gap-4">
-                <div className="h-24 bg-gray-200 rounded" />
-                <div className="h-24 bg-gray-200 rounded" />
-                <div className="h-24 bg-gray-200 rounded" />
+                <div className="h-24 bg-slate-700 rounded" />
+                <div className="h-24 bg-slate-700 rounded" />
+                <div className="h-24 bg-slate-700 rounded" />
               </div>
             </div>
 
@@ -165,18 +165,18 @@ export default function WidgetSettings({ config, onConfigChange }: WidgetSetting
             <div
               className={`absolute bottom-20 ${
                 config.widget.position === 'bottom-right' ? 'right-4' : 'left-4'
-              } bg-white rounded-lg shadow-lg p-3 max-w-[200px]`}
+              } bg-slate-700 rounded-lg shadow-lg p-3 max-w-[200px] border border-slate-600`}
             >
-              <p className="text-sm text-gray-800">{config.widget.welcomeMessage}</p>
+              <p className="text-sm text-slate-200">{config.widget.welcomeMessage}</p>
               <div
                 className={`absolute -bottom-2 ${
                   config.widget.position === 'bottom-right' ? 'right-4' : 'left-4'
-                } w-4 h-4 bg-white transform rotate-45`}
+                } w-4 h-4 bg-slate-700 border-r border-b border-slate-600 transform rotate-45`}
               />
             </div>
           </div>
 
-          <p className="text-xs text-gray-500 mt-3">
+          <p className="text-xs text-slate-400 mt-3">
             This shows how the widget will appear on the website. The actual icon can be customized in WordPress using the Media Library.
           </p>
         </div>

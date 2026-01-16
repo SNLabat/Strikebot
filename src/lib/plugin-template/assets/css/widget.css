@@ -330,6 +330,7 @@
 .strikebot-dark .strikebot-chat-input input {
     background: #374151;
     border-color: #4b5563;
+    color: #ffffff;
 }
 
 .strikebot-chat-input input:focus {

@@ -128,19 +128,19 @@ export default function Home() {
   ] as const;
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-slate-800/50 backdrop-blur-lg border-b border-slate-700/50 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <Bot className="w-8 h-8 text-blue-600" />
-              <h1 className="text-xl font-bold text-gray-900">Strikebot Builder</h1>
+              <Bot className="w-8 h-8 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500" />
+              <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500">Strikebot Builder</h1>
             </div>
             <button
               onClick={handleGeneratePlugin}
               disabled={isGenerating}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 text-white rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/50"
             >
               <Download className="w-4 h-4" />
               {isGenerating ? 'Generating...' : 'Download Plugin'}
@@ -151,17 +151,17 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab Navigation */}
-        <nav className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-8">
+        <nav className="flex space-x-1 bg-slate-800/50 backdrop-blur-lg p-1 rounded-lg mb-8 border border-slate-700/50">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors flex-1 justify-center ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all flex-1 justify-center ${
                   activeTab === tab.id
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-gradient-to-r from-pink-500/20 via-purple-500/20 to-blue-500/20 text-white shadow-lg border border-purple-500/50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -172,7 +172,7 @@ export default function Home() {
         </nav>
 
         {/* Tab Content */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-lg border border-slate-700/50 p-6">
           {activeTab === 'tier' && (
             <TierSelector
               selectedTier={config.tier}
@@ -203,26 +203,26 @@ export default function Home() {
         </div>
 
         {/* Current Configuration Summary */}
-        <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Configuration Summary</h3>
+        <div className="mt-8 bg-slate-800/50 backdrop-blur-lg rounded-xl p-6 border border-slate-700/50">
+          <h3 className="text-lg font-semibold text-white mb-4">Configuration Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-sm text-gray-500">Tier</p>
-              <p className="font-medium text-gray-900">{TIER_CONFIGS[config.tier].displayName}</p>
+              <p className="text-sm text-slate-400">Tier</p>
+              <p className="font-medium text-white">{TIER_CONFIGS[config.tier].displayName}</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Model</p>
-              <p className="font-medium text-gray-900">
+              <p className="text-sm text-slate-400">Model</p>
+              <p className="font-medium text-white">
                 {AVAILABLE_MODELS.find(m => m.id === config.model)?.name || config.model}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Message Credits</p>
-              <p className="font-medium text-gray-900">{config.limits.messageCreditsPerMonth.toLocaleString()}/month</p>
+              <p className="text-sm text-slate-400">Message Credits</p>
+              <p className="font-medium text-white">{config.limits.messageCreditsPerMonth.toLocaleString()}/month</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">Storage Limit</p>
-              <p className="font-medium text-gray-900">
+              <p className="text-sm text-slate-400">Storage Limit</p>
+              <p className="font-medium text-white">
                 {config.limits.storageLimitMB >= 1
                   ? `${config.limits.storageLimitMB} MB`
                   : `${config.limits.storageLimitMB * 1024} KB`}

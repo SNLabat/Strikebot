@@ -3,37 +3,75 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 249, 250, 251;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 255, 255, 255;
+  --background-start-rgb: 15, 23, 42;
+  --background-end-rgb: 30, 41, 59;
+  --accent-rgb: 59, 130, 246;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+      135deg,
+      rgb(15, 23, 42) 0%,
+      rgb(30, 41, 59) 50%,
+      rgb(15, 23, 42) 100%
+    );
+  min-height: 100vh;
 }
 
-/* Custom scrollbar */
+/* RGB Gradient Accents */
+@keyframes rgbShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.rgb-gradient {
+  background: linear-gradient(
+    90deg,
+    #ff006e 0%,
+    #8338ec 25%,
+    #3a86ff 50%,
+    #06ffa5 75%,
+    #ff006e 100%
+  );
+  background-size: 200% 200%;
+  animation: rgbShift 5s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.rgb-border {
+  border: 2px solid;
+  border-image: linear-gradient(
+    90deg,
+    #ff006e 0%,
+    #8338ec 25%,
+    #3a86ff 50%,
+    #06ffa5 75%,
+    #ff006e 100%
+  ) 1;
+  animation: rgbShift 5s ease infinite;
+}
+
+/* Custom scrollbar for dark mode */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: #1e293b;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: linear-gradient(135deg, #ff006e, #8338ec, #3a86ff, #06ffa5);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a1a1a1;
+  background: linear-gradient(135deg, #3a86ff, #06ffa5, #ff006e, #8338ec);
 }
