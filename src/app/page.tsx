@@ -17,7 +17,7 @@ export default function Home() {
     id: uuidv4(),
     name: 'My Chatbot',
     tier: 'free',
-    model: 'gpt-3.5-turbo',
+    model: 'gpt-4.1-nano',
     apiKey: '',
     apiEndpoint: 'https://api.openai.com/v1',
     theme: {

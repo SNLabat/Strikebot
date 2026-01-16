@@ -84,12 +84,16 @@ export interface PluginGeneratorRequest {
 }
 
 export const AVAILABLE_MODELS = [
-  { id: 'gpt-4o', name: 'GPT-4o', tier: 'advanced' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tier: 'limited' },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', tier: 'advanced' },
-  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', tier: 'limited' },
-  { id: 'claude-3-5-sonnet', name: 'Claude 3.5 Sonnet', tier: 'advanced' },
-  { id: 'claude-3-haiku', name: 'Claude 3 Haiku', tier: 'limited' },
+  { id: 'gpt-5.1', name: 'GPT-5.1', tier: 'advanced' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', tier: 'advanced' },
+  { id: 'gpt-5-nano', name: 'GPT-5 Nano', tier: 'limited' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', tier: 'advanced' },
+  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', tier: 'limited' },
+  { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', tier: 'limited' },
+  { id: 'o3', name: 'O3', tier: 'advanced' },
+  { id: 'o4-mini', name: 'O4 Mini', tier: 'advanced' },
+  { id: 'gpt-4o', name: 'GPT-4o', tier: 'limited' },
+  { id: 'gpt-4o-realtime-preview', name: 'GPT-4o Realtime Preview', tier: 'advanced' },
 ] as const;
 
 export const TIER_CONFIGS: Record<TierName, TierConfig> = {

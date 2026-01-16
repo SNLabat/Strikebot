@@ -155,7 +155,7 @@ class Strikebot {
         add_option('strikebot_settings', $defaults);
         add_option('strikebot_api_key', $this->config['apiKey'] ?? '');
         add_option('strikebot_api_endpoint', $this->config['apiEndpoint'] ?? 'https://api.openai.com/v1');
-        add_option('strikebot_model', $this->config['model'] ?? 'gpt-3.5-turbo');
+        add_option('strikebot_model', $this->config['model'] ?? 'gpt-4.1-nano');
     }
 
     public function deactivate() {
