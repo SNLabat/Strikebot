@@ -15,7 +15,6 @@
     max-width: 1400px;
     margin: 20px auto;
     padding: 0 20px;
-    overflow-x: hidden;
     box-sizing: border-box;
 }
 
@@ -48,6 +47,8 @@
     overflow: visible;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    min-width: 0;
+    width: 100%;
 }
 
 .strikebot-card:hover {
@@ -71,7 +72,7 @@
 /* Dashboard Grid */
 .strikebot-dashboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 24px;
     margin-bottom: 32px;
     box-sizing: border-box;
@@ -79,7 +80,9 @@
 
 .strikebot-stat {
     text-align: center;
-    padding: 8px 0;
+    padding: 8px 4px;
+    overflow: visible;
+    width: 100%;
 }
 
 .strikebot-stat-value {
@@ -89,10 +92,17 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    margin-bottom: 8px;
+    margin: 0 auto 8px;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    line-height: 1.2;
+    line-height: 1.3;
+    overflow: visible;
+    white-space: normal;
+    display: block;
+    width: auto;
+    min-height: 56px;
+    max-width: 100%;
+    padding: 0 8px;
 }
 
 .strikebot-stat-label {
@@ -102,6 +112,9 @@
     font-weight: 500;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    display: block;
+    overflow: visible;
+    white-space: normal;
 }
 
 .strikebot-progress {
