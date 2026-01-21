@@ -286,6 +286,215 @@ Examples:
     console.log('Strikebot config script loaded');
     </script>
 
+    <!-- Analytics Section -->
+    <div class="strikebot-card" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Analytics</h2>
+            <div>
+                <button type="button" class="button" onclick="strikebotExportAnalytics('csv')" style="margin-right: 8px;">Export CSV</button>
+                <button type="button" class="button" onclick="strikebotExportAnalytics('json')">Export JSON</button>
+            </div>
+        </div>
+        <div id="strikebot-analytics-content">
+            <p style="text-align: center; color: #666; padding: 20px;">Loading analytics...</p>
+        </div>
+    </div>
+
+    <!-- Chat Logs Section -->
+    <div class="strikebot-card" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Chat Logs</h2>
+            <div>
+                <button type="button" class="button" onclick="strikebotExportLogs('csv')" style="margin-right: 8px;">Export CSV</button>
+                <button type="button" class="button" onclick="strikebotExportLogs('json')">Export JSON</button>
+            </div>
+        </div>
+        <div id="strikebot-chat-logs-content">
+            <p style="text-align: center; color: #666; padding: 20px;">Loading chat logs...</p>
+        </div>
+        <div id="strikebot-logs-pagination" style="margin-top: 20px; text-align: center;"></div>
+    </div>
+
+    <script type="text/javascript">
+    var currentLogsPage = 1;
+
+    function strikebotLoadAnalytics() {
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
+        var contentEl = document.getElementById('strikebot-analytics-content');
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', ajaxUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        var data = response.data;
+                        var html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">';
+                        
+                        html += '<div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px;">';
+                        html += '<div style="font-size: 32px; font-weight: 600; color: #3b82f6;">' + data.total_sessions + '</div>';
+                        html += '<div style="color: #6b7280; margin-top: 8px;">Total Sessions</div>';
+                        html += '</div>';
+                        
+                        html += '<div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px;">';
+                        html += '<div style="font-size: 32px; font-weight: 600; color: #10b981;">' + data.total_messages + '</div>';
+                        html += '<div style="color: #6b7280; margin-top: 8px;">Total Messages</div>';
+                        html += '</div>';
+                        
+                        html += '<div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px;">';
+                        html += '<div style="font-size: 32px; font-weight: 600; color: #f59e0b;">' + data.messages_today + '</div>';
+                        html += '<div style="color: #6b7280; margin-top: 8px;">Messages Today</div>';
+                        html += '</div>';
+                        
+                        html += '<div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px;">';
+                        html += '<div style="font-size: 32px; font-weight: 600; color: #8b5cf6;">' + data.messages_week + '</div>';
+                        html += '<div style="color: #6b7280; margin-top: 8px;">Messages This Week</div>';
+                        html += '</div>';
+                        
+                        html += '<div style="text-align: center; padding: 20px; background: #f9fafb; border-radius: 8px;">';
+                        html += '<div style="font-size: 32px; font-weight: 600; color: #ec4899;">' + data.avg_messages_per_session + '</div>';
+                        html += '<div style="color: #6b7280; margin-top: 8px;">Avg per Session</div>';
+                        html += '</div>';
+                        
+                        html += '</div>';
+                        
+                        // Daily messages chart (simple text representation)
+                        if (data.daily_messages && data.daily_messages.length > 0) {
+                            html += '<h3 style="margin-top: 30px; margin-bottom: 15px;">Messages Per Day (Last 30 Days)</h3>';
+                            html += '<div style="background: #f9fafb; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto;">';
+                            html += '<table style="width: 100%; border-collapse: collapse;">';
+                            html += '<thead><tr style="border-bottom: 2px solid #e5e7eb;"><th style="text-align: left; padding: 10px;">Date</th><th style="text-align: right; padding: 10px;">Messages</th></tr></thead>';
+                            html += '<tbody>';
+                            for (var i = data.daily_messages.length - 1; i >= 0; i--) {
+                                var day = data.daily_messages[i];
+                                html += '<tr style="border-bottom: 1px solid #e5e7eb;">';
+                                html += '<td style="padding: 10px;">' + day.date + '</td>';
+                                html += '<td style="text-align: right; padding: 10px;">' + day.count + '</td>';
+                                html += '</tr>';
+                            }
+                            html += '</tbody></table>';
+                            html += '</div>';
+                        }
+                        
+                        contentEl.innerHTML = html;
+                    } else {
+                        contentEl.innerHTML = '<p style="color: #dc2626;">Failed to load analytics</p>';
+                    }
+                } catch (e) {
+                    console.error('Error loading analytics:', e);
+                    contentEl.innerHTML = '<p style="color: #dc2626;">Error loading analytics</p>';
+                }
+            }
+        };
+        
+        xhr.send('action=strikebot_get_analytics&nonce=' + encodeURIComponent(nonce));
+    }
+
+    function strikebotLoadLogs(page) {
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
+        var contentEl = document.getElementById('strikebot-chat-logs-content');
+        var paginationEl = document.getElementById('strikebot-logs-pagination');
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', ajaxUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        var data = response.data;
+                        currentLogsPage = data.page;
+                        
+                        if (data.logs && data.logs.length > 0) {
+                            var html = '<div style="max-height: 600px; overflow-y: auto;">';
+                            
+                            for (var i = 0; i < data.logs.length; i++) {
+                                var log = data.logs[i];
+                                html += '<div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 15px; background: #f9fafb;">';
+                                html += '<div style="display: flex; justify-content: space-between; margin-bottom: 10px;">';
+                                html += '<div><strong>Session:</strong> <code style="background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 12px;">' + log.session_id + '</code></div>';
+                                html += '<div><strong>Messages:</strong> ' + log.message_count + ' | <strong>Last:</strong> ' + log.last_message + '</div>';
+                                html += '</div>';
+                                
+                                html += '<div style="background: white; padding: 10px; border-radius: 6px; max-height: 200px; overflow-y: auto;">';
+                                for (var j = 0; j < log.messages.length; j++) {
+                                    var msg = log.messages[j];
+                                    var roleClass = msg.role === 'user' ? 'user' : 'assistant';
+                                    var bgColor = msg.role === 'user' ? '#e0f2fe' : '#f3f4f6';
+                                    html += '<div style="margin-bottom: 8px; padding: 8px; background: ' + bgColor + '; border-radius: 4px;">';
+                                    html += '<div style="font-size: 11px; color: #666; margin-bottom: 4px;"><strong>' + msg.role.toUpperCase() + '</strong> - ' + msg.created_at + '</div>';
+                                    html += '<div style="font-size: 13px;">' + escapeHtml(msg.content.substring(0, 200)) + (msg.content.length > 200 ? '...' : '') + '</div>';
+                                    html += '</div>';
+                                }
+                                html += '</div>';
+                                html += '</div>';
+                            }
+                            
+                            html += '</div>';
+                            contentEl.innerHTML = html;
+                            
+                            // Pagination
+                            if (data.total_pages > 1) {
+                                var pagHtml = '<div style="display: flex; justify-content: center; gap: 10px; align-items: center;">';
+                                if (data.page > 1) {
+                                    pagHtml += '<button type="button" class="button" onclick="strikebotLoadLogs(' + (data.page - 1) + ')">Previous</button>';
+                                }
+                                pagHtml += '<span>Page ' + data.page + ' of ' + data.total_pages + ' (' + data.total + ' sessions)</span>';
+                                if (data.page < data.total_pages) {
+                                    pagHtml += '<button type="button" class="button" onclick="strikebotLoadLogs(' + (data.page + 1) + ')">Next</button>';
+                                }
+                                pagHtml += '</div>';
+                                paginationEl.innerHTML = pagHtml;
+                            } else {
+                                paginationEl.innerHTML = '';
+                            }
+                        } else {
+                            contentEl.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No chat logs found.</p>';
+                            paginationEl.innerHTML = '';
+                        }
+                    } else {
+                        contentEl.innerHTML = '<p style="color: #dc2626;">Failed to load chat logs</p>';
+                    }
+                } catch (e) {
+                    console.error('Error loading logs:', e);
+                    contentEl.innerHTML = '<p style="color: #dc2626;">Error loading chat logs</p>';
+                }
+            }
+        };
+        
+        xhr.send('action=strikebot_get_chat_logs&nonce=' + encodeURIComponent(nonce) + '&page=' + page + '&per_page=10');
+    }
+
+    function strikebotExportLogs(format) {
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
+        window.location.href = ajaxUrl + '?action=strikebot_export_logs&nonce=' + encodeURIComponent(nonce) + '&format=' + format;
+    }
+
+    function strikebotExportAnalytics(format) {
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
+        window.location.href = ajaxUrl + '?action=strikebot_export_analytics&nonce=' + encodeURIComponent(nonce) + '&format=' + format;
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Load data on page load
+    strikebotLoadAnalytics();
+    strikebotLoadLogs(1);
+    </script>
+
     <!-- Quick Actions -->
     <div class="strikebot-quick-actions">
         <h2>Quick Actions</h2>

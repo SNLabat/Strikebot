@@ -60,6 +60,10 @@ class Strikebot {
         add_action('wp_ajax_strikebot_crawl_sitemap', array($this, 'crawl_sitemap'));
         add_action('wp_ajax_strikebot_crawl_url', array($this, 'crawl_url'));
         add_action('wp_ajax_strikebot_debug_context', array($this, 'debug_context'));
+        add_action('wp_ajax_strikebot_get_chat_logs', array($this, 'get_chat_logs'));
+        add_action('wp_ajax_strikebot_get_analytics', array($this, 'get_analytics'));
+        add_action('wp_ajax_strikebot_export_logs', array($this, 'export_logs'));
+        add_action('wp_ajax_strikebot_export_analytics', array($this, 'export_analytics'));
     }
 
     public function activate() {
@@ -932,6 +936,266 @@ class Strikebot {
             'context_preview' => substr($context, 0, 2000),
             'full_context' => $context
         ));
+    }
+
+    public function get_chat_logs() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_chat_history';
+        
+        $page = isset($_POST['page']) ? intval($_POST['page']) : 1;
+        $per_page = isset($_POST['per_page']) ? intval($_POST['per_page']) : 50;
+        $offset = ($page - 1) * $per_page;
+        
+        // Get total count
+        $total = $wpdb->get_var("SELECT COUNT(DISTINCT session_id) FROM $table");
+        
+        // Get unique sessions with latest message time
+        $sessions = $wpdb->get_results($wpdb->prepare(
+            "SELECT session_id, MAX(created_at) as last_message, COUNT(*) as message_count 
+             FROM $table 
+             GROUP BY session_id 
+             ORDER BY last_message DESC 
+             LIMIT %d OFFSET %d",
+            $per_page,
+            $offset
+        ));
+        
+        // Get all messages for these sessions
+        $logs = array();
+        foreach ($sessions as $session) {
+            $messages = $wpdb->get_results($wpdb->prepare(
+                "SELECT id, role, content, created_at 
+                 FROM $table 
+                 WHERE session_id = %s 
+                 ORDER BY created_at ASC",
+                $session->session_id
+            ));
+            
+            $logs[] = array(
+                'session_id' => $session->session_id,
+                'last_message' => $session->last_message,
+                'message_count' => intval($session->message_count),
+                'messages' => $messages
+            );
+        }
+        
+        wp_send_json_success(array(
+            'logs' => $logs,
+            'total' => intval($total),
+            'page' => $page,
+            'per_page' => $per_page,
+            'total_pages' => ceil($total / $per_page)
+        ));
+    }
+
+    public function get_analytics() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+        }
+
+        global $wpdb;
+        $chat_table = $wpdb->prefix . 'strikebot_chat_history';
+        $usage_table = $wpdb->prefix . 'strikebot_usage';
+        
+        // Messages per day (last 30 days)
+        $daily_messages = $wpdb->get_results("
+            SELECT DATE(created_at) as date, COUNT(*) as count 
+            FROM $chat_table 
+            WHERE role = 'user' 
+            AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ");
+        
+        // Total stats
+        $total_sessions = $wpdb->get_var("SELECT COUNT(DISTINCT session_id) FROM $chat_table");
+        $total_messages = $wpdb->get_var("SELECT COUNT(*) FROM $chat_table WHERE role = 'user'");
+        $total_responses = $wpdb->get_var("SELECT COUNT(*) FROM $chat_table WHERE role = 'assistant'");
+        
+        // Messages today
+        $messages_today = $wpdb->get_var("
+            SELECT COUNT(*) 
+            FROM $chat_table 
+            WHERE role = 'user' 
+            AND DATE(created_at) = CURDATE()
+        ");
+        
+        // Messages this week
+        $messages_week = $wpdb->get_var("
+            SELECT COUNT(*) 
+            FROM $chat_table 
+            WHERE role = 'user' 
+            AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        ");
+        
+        // Average messages per session
+        $avg_messages = $total_sessions > 0 ? round($total_messages / $total_sessions, 2) : 0;
+        
+        // Monthly usage history
+        $monthly_usage = $wpdb->get_results("
+            SELECT month, message_count 
+            FROM $usage_table 
+            ORDER BY month DESC 
+            LIMIT 12
+        ");
+        
+        wp_send_json_success(array(
+            'daily_messages' => $daily_messages,
+            'total_sessions' => intval($total_sessions),
+            'total_messages' => intval($total_messages),
+            'total_responses' => intval($total_responses),
+            'messages_today' => intval($messages_today),
+            'messages_week' => intval($messages_week),
+            'avg_messages_per_session' => $avg_messages,
+            'monthly_usage' => $monthly_usage
+        ));
+    }
+
+    public function export_logs() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_chat_history';
+        $format = isset($_GET['format']) ? sanitize_text_field($_GET['format']) : 'csv';
+        
+        // Get all chat logs grouped by session
+        $sessions = $wpdb->get_results("
+            SELECT session_id, MAX(created_at) as last_message, COUNT(*) as message_count 
+            FROM $table 
+            GROUP BY session_id 
+            ORDER BY last_message DESC
+        ");
+        
+        if ($format === 'json') {
+            header('Content-Type: application/json');
+            header('Content-Disposition: attachment; filename="strikebot-logs-' . date('Y-m-d') . '.json"');
+            
+            $export_data = array();
+            foreach ($sessions as $session) {
+                $messages = $wpdb->get_results($wpdb->prepare(
+                    "SELECT role, content, created_at 
+                     FROM $table 
+                     WHERE session_id = %s 
+                     ORDER BY created_at ASC",
+                    $session->session_id
+                ));
+                
+                $export_data[] = array(
+                    'session_id' => $session->session_id,
+                    'last_message' => $session->last_message,
+                    'message_count' => intval($session->message_count),
+                    'messages' => $messages
+                );
+            }
+            
+            echo json_encode($export_data, JSON_PRETTY_PRINT);
+            exit;
+        } else {
+            // CSV format
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="strikebot-logs-' . date('Y-m-d') . '.csv"');
+            
+            $output = fopen('php://output', 'w');
+            fputcsv($output, array('Session ID', 'Date', 'Role', 'Message'));
+            
+            foreach ($sessions as $session) {
+                $messages = $wpdb->get_results($wpdb->prepare(
+                    "SELECT role, content, created_at 
+                     FROM $table 
+                     WHERE session_id = %s 
+                     ORDER BY created_at ASC",
+                    $session->session_id
+                ));
+                
+                foreach ($messages as $message) {
+                    fputcsv($output, array(
+                        $session->session_id,
+                        $message->created_at,
+                        $message->role,
+                        $message->content
+                    ));
+                }
+            }
+            
+            fclose($output);
+            exit;
+        }
+    }
+
+    public function export_analytics() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        
+        if (!current_user_can('manage_options')) {
+            wp_die('Unauthorized');
+        }
+
+        global $wpdb;
+        $chat_table = $wpdb->prefix . 'strikebot_chat_history';
+        $usage_table = $wpdb->prefix . 'strikebot_usage';
+        $format = isset($_GET['format']) ? sanitize_text_field($_GET['format']) : 'csv';
+        
+        // Get analytics data
+        $daily_messages = $wpdb->get_results("
+            SELECT DATE(created_at) as date, COUNT(*) as count 
+            FROM $chat_table 
+            WHERE role = 'user' 
+            AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC
+        ");
+        
+        $monthly_usage = $wpdb->get_results("
+            SELECT month, message_count 
+            FROM $usage_table 
+            ORDER BY month DESC 
+            LIMIT 12
+        ");
+        
+        if ($format === 'json') {
+            header('Content-Type: application/json');
+            header('Content-Disposition: attachment; filename="strikebot-analytics-' . date('Y-m-d') . '.json"');
+            
+            echo json_encode(array(
+                'daily_messages' => $daily_messages,
+                'monthly_usage' => $monthly_usage,
+                'exported_at' => current_time('mysql')
+            ), JSON_PRETTY_PRINT);
+            exit;
+        } else {
+            // CSV format
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="strikebot-analytics-' . date('Y-m-d') . '.csv"');
+            
+            $output = fopen('php://output', 'w');
+            
+            // Daily messages
+            fputcsv($output, array('Type', 'Date/Period', 'Count'));
+            fputcsv($output, array('Daily Messages', '', ''));
+            foreach ($daily_messages as $day) {
+                fputcsv($output, array('Daily', $day->date, $day->count));
+            }
+            
+            fputcsv($output, array('')); // Empty row
+            fputcsv($output, array('Monthly Usage', '', ''));
+            foreach ($monthly_usage as $month) {
+                fputcsv($output, array('Monthly', $month->month, $month->message_count));
+            }
+            
+            fclose($output);
+            exit;
+        }
     }
 }
 
