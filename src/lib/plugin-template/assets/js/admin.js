@@ -782,6 +782,12 @@
         const $btn = $('#config-save-btn');
         const originalText = $btn.text();
 
+        console.log('Saving configuration:', {
+            instructions: instructions,
+            instructionsLength: instructions.length,
+            removeBranding: removeBranding
+        });
+
         // Disable button and show loading state
         $btn.prop('disabled', true).text('Saving...');
 
@@ -795,8 +801,9 @@
                 removeBranding: removeBranding ? 'true' : 'false'
             },
             success: function(response) {
+                console.log('Save response:', response);
                 if (response.success) {
-                    alert('Configuration saved successfully!');
+                    alert('Configuration saved successfully!\n\nInstructions: ' + (response.data.debug ? response.data.debug.instructions_length : '?') + ' chars\nRemove Branding: ' + (response.data.debug ? response.data.debug.removeBranding : '?'));
                 } else {
                     alert(response.data.message || 'Error saving configuration');
                 }

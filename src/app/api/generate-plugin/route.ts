@@ -152,7 +152,8 @@ class Strikebot {
             'tier' => $this->config['tier'] ?? 'starter',
             'billingPeriod' => $this->config['billingPeriod'] ?? 'monthly',
             'addOns' => $this->config['addOns'] ?? array(),
-            'instructions' => ''
+            'instructions' => '',
+            'removeBranding' => false
         );
 
         add_option('strikebot_settings', $defaults);
@@ -344,14 +345,20 @@ class Strikebot {
         check_ajax_referer('strikebot_admin', 'nonce');
         if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
         $settings = get_option('strikebot_settings');
+        if (!is_array($settings)) { $settings = array(); }
         if (isset($_POST['name'])) { $settings['name'] = sanitize_text_field($_POST['name']); }
-        if (isset($_POST['instructions'])) { $settings['instructions'] = sanitize_textarea_field($_POST['instructions']); }
-        if (isset($_POST['removeBranding'])) { $settings['removeBranding'] = $_POST['removeBranding'] === 'true' || $_POST['removeBranding'] === '1'; }
+        if (isset($_POST['instructions'])) {
+            $settings['instructions'] = sanitize_textarea_field($_POST['instructions']);
+        }
+        if (isset($_POST['removeBranding'])) {
+            $settings['removeBranding'] = ($_POST['removeBranding'] === 'true' || $_POST['removeBranding'] === '1');
+        }
         if (isset($_POST['theme'])) { $settings['theme'] = array_map('sanitize_text_field', $_POST['theme']); }
         if (isset($_POST['widget'])) { $settings['widget'] = array_map('sanitize_text_field', $_POST['widget']); }
         if (isset($_POST['api_key'])) { update_option('strikebot_api_key', sanitize_text_field($_POST['api_key'])); }
-        update_option('strikebot_settings', $settings);
-        wp_send_json_success(array('message' => 'Settings saved'));
+        $result = update_option('strikebot_settings', $settings);
+        error_log('Strikebot: Settings saved. Result: ' . ($result ? 'success' : 'no change') . ', instructions: ' . (isset($settings['instructions']) ? strlen($settings['instructions']) : '0') . ' chars, removeBranding: ' . ($settings['removeBranding'] ?? 'not set'));
+        wp_send_json_success(array('message' => 'Settings saved', 'debug' => array('instructions_length' => isset($settings['instructions']) ? strlen($settings['instructions']) : 0, 'removeBranding' => $settings['removeBranding'] ?? false)));
     }
 
     public function save_admin_theme() {
