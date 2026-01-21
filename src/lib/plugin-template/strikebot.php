@@ -127,11 +127,9 @@ class Strikebot {
             'limits' => $this->config['limits'] ?? array(
                 'messageCreditsPerMonth' => 10000,
                 'storageLimitMB' => 50,
-                'aiActionsPerAgent' => 5,
                 'linkTrainingLimit' => null
             ),
             'features' => $this->config['features'] ?? array(
-                'integrations' => false,
                 'apiAccess' => false,
                 'analytics' => 'basic',
                 'autoRetrain' => true,
@@ -628,7 +626,8 @@ class Strikebot {
             'type' => $type,
             'name' => sanitize_text_field($_POST['name'] ?? ''),
             'content' => $new_content,
-            'metadata' => $metadata_to_store
+            'metadata' => $metadata_to_store,
+            'created_at' => current_time('mysql')
         ));
         
         if ($insert_result === false) {

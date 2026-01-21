@@ -32,10 +32,8 @@ An internal tool for building and configuring AI chatbots that can be deployed a
 | Price | $0/mo | $40/mo | $150/mo | $500/mo |
 | Messages/Month | 50 | 1,500 | 10,000 | 40,000 |
 | Storage | 400 KB | 20 MB | 40 MB | 60 MB |
-| AI Actions | 0 | 5 | 10 | 15 |
 | Training Links | 10 | Unlimited | Unlimited | Unlimited |
 | Model Access | Limited | Advanced | Advanced | Advanced |
-| Integrations | No | Yes | Yes | Yes |
 | API Access | No | Yes | Yes | Yes |
 | Analytics | None | Basic | Basic | Advanced |
 | Auto Retrain | No | No | Yes | Yes |

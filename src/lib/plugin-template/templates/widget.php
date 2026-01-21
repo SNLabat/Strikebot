@@ -19,10 +19,12 @@ $placeholder = $widget['placeholder'] ?? 'Type your message...';
 
 // Check if branding removal add-on is active
 $removeBranding = false;
-foreach ($addOns as $addOn) {
-    if ($addOn['type'] === 'remove_branding') {
-        $removeBranding = true;
-        break;
+if (is_array($addOns)) {
+    foreach ($addOns as $addOn) {
+        if (is_array($addOn) && isset($addOn['type']) && $addOn['type'] === 'remove_branding') {
+            $removeBranding = true;
+            break;
+        }
     }
 }
 ?>

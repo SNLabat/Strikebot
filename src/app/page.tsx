@@ -40,13 +40,11 @@ export default function Home() {
     limits: {
       messageCreditsPerMonth: TIER_CONFIGS.starter.features.messageCreditsPerMonth,
       storageLimitMB: TIER_CONFIGS.starter.features.storageLimitMB,
-      aiActionsPerAgent: TIER_CONFIGS.starter.features.aiActionsPerAgent,
       linkTrainingLimit: TIER_CONFIGS.starter.features.linkTrainingLimit === 'unlimited'
         ? null
         : TIER_CONFIGS.starter.features.linkTrainingLimit,
     },
     features: {
-      integrations: TIER_CONFIGS.starter.features.integrations,
       apiAccess: TIER_CONFIGS.starter.features.apiAccess,
       analytics: TIER_CONFIGS.starter.features.analytics,
       autoRetrain: TIER_CONFIGS.starter.features.autoRetrain,
@@ -71,13 +69,11 @@ export default function Home() {
       limits: {
         messageCreditsPerMonth: tierConfig.features.messageCreditsPerMonth,
         storageLimitMB: tierConfig.features.storageLimitMB,
-        aiActionsPerAgent: tierConfig.features.aiActionsPerAgent,
         linkTrainingLimit: tierConfig.features.linkTrainingLimit === 'unlimited'
           ? null
           : tierConfig.features.linkTrainingLimit,
       },
       features: {
-        integrations: tierConfig.features.integrations,
         apiAccess: tierConfig.features.apiAccess,
         analytics: tierConfig.features.analytics,
         autoRetrain: tierConfig.features.autoRetrain,

@@ -21,10 +21,8 @@ export interface TierConfig {
   features: {
     messageCreditsPerMonth: number;
     storageLimitMB: number;
-    aiActionsPerAgent: number;
     unlimitedWebsites: boolean;
     linkTrainingLimit: number | 'unlimited';
-    integrations: boolean;
     apiAccess: boolean;
     analytics: 'none' | 'basic' | 'advanced';
     autoRetrain: boolean;
@@ -75,13 +73,11 @@ export interface ChatbotConfig {
   limits: {
     messageCreditsPerMonth: number;
     storageLimitMB: number;
-    aiActionsPerAgent: number;
     linkTrainingLimit: number | null;
   };
 
   // Feature flags from tier
   features: {
-    integrations: boolean;
     apiAccess: boolean;
     analytics: 'none' | 'basic' | 'advanced';
     autoRetrain: boolean;
@@ -136,10 +132,8 @@ export const TIER_CONFIGS: Record<TierName, TierConfig> = {
     features: {
       messageCreditsPerMonth: 10000,
       storageLimitMB: 50,
-      aiActionsPerAgent: 5,
       unlimitedWebsites: true,
       linkTrainingLimit: 'unlimited',
-      integrations: false,
       apiAccess: false,
       analytics: 'basic',
       autoRetrain: true,
@@ -168,10 +162,8 @@ export const TIER_CONFIGS: Record<TierName, TierConfig> = {
     features: {
       messageCreditsPerMonth: 25000,
       storageLimitMB: 100,
-      aiActionsPerAgent: 10,
       unlimitedWebsites: true,
       linkTrainingLimit: 'unlimited',
-      integrations: true,
       apiAccess: true,
       analytics: 'advanced',
       autoRetrain: true,
@@ -200,10 +192,8 @@ export const TIER_CONFIGS: Record<TierName, TierConfig> = {
     features: {
       messageCreditsPerMonth: 50000,
       storageLimitMB: 200,
-      aiActionsPerAgent: 20,
       unlimitedWebsites: true,
       linkTrainingLimit: 'unlimited',
-      integrations: true,
       apiAccess: true,
       analytics: 'advanced',
       autoRetrain: true,
@@ -232,10 +222,8 @@ export const TIER_CONFIGS: Record<TierName, TierConfig> = {
     features: {
       messageCreditsPerMonth: 100000,
       storageLimitMB: 500,
-      aiActionsPerAgent: 50,
       unlimitedWebsites: true,
       linkTrainingLimit: 'unlimited',
-      integrations: true,
       apiAccess: true,
       analytics: 'advanced',
       autoRetrain: true,

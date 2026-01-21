@@ -58,10 +58,6 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
                         </span>
                     </div>
                     <div class="strikebot-limit-item">
-                        <span class="strikebot-limit-label">AI Actions</span>
-                        <span class="strikebot-limit-value"><?php echo $settings['limits']['aiActionsPerAgent'] ?? 0; ?></span>
-                    </div>
-                    <div class="strikebot-limit-item">
                         <span class="strikebot-limit-label">Training Links</span>
                         <span class="strikebot-limit-value">
                             <?php echo ($settings['limits']['linkTrainingLimit'] ?? null) === null ? 'Unlimited' : $settings['limits']['linkTrainingLimit']; ?>
@@ -76,10 +72,6 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
                 <p class="description">Features available with your plan.</p>
 
                 <div class="strikebot-features-list">
-                    <div class="strikebot-feature-item <?php echo ($settings['features']['integrations'] ?? false) ? 'enabled' : 'disabled'; ?>">
-                        <span class="dashicons <?php echo ($settings['features']['integrations'] ?? false) ? 'dashicons-yes-alt' : 'dashicons-no'; ?>"></span>
-                        <span>Integrations (Zendesk, WhatsApp, etc.)</span>
-                    </div>
                     <div class="strikebot-feature-item <?php echo ($settings['features']['apiAccess'] ?? false) ? 'enabled' : 'disabled'; ?>">
                         <span class="dashicons <?php echo ($settings['features']['apiAccess'] ?? false) ? 'dashicons-yes-alt' : 'dashicons-no'; ?>"></span>
                         <span>API Access</span>
