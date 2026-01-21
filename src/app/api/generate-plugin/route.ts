@@ -91,6 +91,7 @@ class Strikebot {
         add_action('wp_ajax_strikebot_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_nopriv_strikebot_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_strikebot_save_settings', array($this, 'save_settings'));
+        add_action('wp_ajax_strikebot_save_chatbot_config', array($this, 'save_chatbot_config'));
         add_action('wp_ajax_strikebot_save_admin_theme', array($this, 'save_admin_theme'));
         add_action('wp_ajax_strikebot_save_knowledge', array($this, 'save_knowledge'));
         add_action('wp_ajax_strikebot_delete_knowledge', array($this, 'delete_knowledge'));
@@ -389,6 +390,17 @@ class Strikebot {
         if (!in_array($theme, array('light', 'dark'))) { $theme = 'light'; }
         update_option('strikebot_admin_theme', $theme);
         wp_send_json_success(array('message' => 'Theme saved', 'theme' => $theme));
+    }
+
+    public function save_chatbot_config() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
+        $settings = get_option('strikebot_settings', array());
+        if (!is_array($settings)) { $settings = array(); }
+        $settings['instructions'] = isset($_POST['instructions']) ? sanitize_textarea_field($_POST['instructions']) : '';
+        $settings['removeBranding'] = isset($_POST['removeBranding']) && $_POST['removeBranding'] === '1';
+        update_option('strikebot_settings', $settings);
+        wp_send_json_success(array('message' => 'Configuration saved', 'instructions_length' => strlen($settings['instructions']), 'removeBranding' => $settings['removeBranding']));
     }
 
     public function save_knowledge() {
