@@ -105,6 +105,8 @@ class Strikebot {
         add_action('wp_ajax_strikebot_get_analytics', array($this, 'get_analytics'));
         add_action('wp_ajax_strikebot_export_logs', array($this, 'export_logs'));
         add_action('wp_ajax_strikebot_export_analytics', array($this, 'export_analytics'));
+        add_action('wp_ajax_strikebot_email_logs', array($this, 'email_logs'));
+        add_action('wp_ajax_strikebot_email_analytics', array($this, 'email_analytics'));
     }
 
     public function activate() {
@@ -657,6 +659,60 @@ class Strikebot {
             fclose($output);
             exit;
         }
+    }
+
+    public function email_logs() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
+        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+        if (empty($email) || !is_email($email)) { wp_send_json_error(array('message' => 'Valid email address is required')); }
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_chat_history';
+        $sessions = $wpdb->get_results("SELECT session_id, MAX(created_at) as last_message, COUNT(*) as message_count FROM $table GROUP BY session_id ORDER BY last_message DESC");
+        $email_subject = 'Strikebot Chat Logs - ' . date('Y-m-d');
+        $email_body = "Chat Transcripts from Strikebot\\n\\nGenerated: " . current_time('mysql') . "\\nTotal Sessions: " . count($sessions) . "\\n\\n" . str_repeat('=', 70) . "\\n\\n";
+        foreach ($sessions as $session) {
+            $messages = $wpdb->get_results($wpdb->prepare("SELECT role, content, created_at FROM $table WHERE session_id = %s ORDER BY created_at ASC", $session->session_id));
+            $email_body .= "SESSION: " . $session->session_id . "\\nLast Message: " . $session->last_message . "\\nTotal Messages: " . $session->message_count . "\\n" . str_repeat('-', 70) . "\\n\\n";
+            foreach ($messages as $message) {
+                $email_body .= "[" . strtoupper($message->role) . "] " . $message->created_at . "\\n" . wordwrap($message->content, 70, "\\n") . "\\n\\n";
+            }
+            $email_body .= "\\n" . str_repeat('=', 70) . "\\n\\n";
+        }
+        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        $sent = wp_mail($email, $email_subject, $email_body, $headers);
+        if ($sent) { wp_send_json_success(array('message' => 'Chat logs sent successfully to ' . $email)); }
+        else { wp_send_json_error(array('message' => 'Failed to send email. Please check your WordPress email configuration.')); }
+    }
+
+    public function email_analytics() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
+        $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+        if (empty($email) || !is_email($email)) { wp_send_json_error(array('message' => 'Valid email address is required')); }
+        global $wpdb;
+        $chat_table = $wpdb->prefix . 'strikebot_chat_history';
+        $usage_table = $wpdb->prefix . 'strikebot_usage';
+        $daily_messages = $wpdb->get_results("SELECT DATE(created_at) as date, COUNT(*) as count FROM $chat_table WHERE role = 'user' AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) GROUP BY DATE(created_at) ORDER BY date ASC");
+        $monthly_usage = $wpdb->get_results("SELECT month, message_count FROM $usage_table ORDER BY month DESC LIMIT 12");
+        $total_sessions = $wpdb->get_var("SELECT COUNT(DISTINCT session_id) FROM $chat_table");
+        $total_messages = $wpdb->get_var("SELECT COUNT(*) FROM $chat_table WHERE role = 'user'");
+        $messages_today = $wpdb->get_var("SELECT COUNT(*) FROM $chat_table WHERE role = 'user' AND DATE(created_at) = CURDATE()");
+        $messages_week = $wpdb->get_var("SELECT COUNT(*) FROM $chat_table WHERE role = 'user' AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)");
+        $avg_messages = $total_sessions > 0 ? round($total_messages / $total_sessions, 2) : 0;
+        $email_subject = 'Strikebot Analytics Report - ' . date('Y-m-d');
+        $email_body = "Strikebot Analytics Report\\n\\nGenerated: " . current_time('mysql') . "\\n\\nSUMMARY STATISTICS\\n" . str_repeat('=', 50) . "\\nTotal Sessions: " . $total_sessions . "\\nTotal Messages: " . $total_messages . "\\nMessages Today: " . $messages_today . "\\nMessages This Week: " . $messages_week . "\\nAverage Messages per Session: " . $avg_messages . "\\n\\nDAILY MESSAGES (Last 30 Days)\\n" . str_repeat('=', 50) . "\\n" . str_pad("Date", 15) . str_pad("Messages", 15) . "\\n" . str_repeat('-', 50) . "\\n";
+        foreach ($daily_messages as $day) {
+            $email_body .= str_pad($day->date, 15) . str_pad($day->count, 15) . "\\n";
+        }
+        $email_body .= "\\nMONTHLY USAGE HISTORY\\n" . str_repeat('=', 50) . "\\n" . str_pad("Month", 15) . str_pad("Message Count", 20) . "\\n" . str_repeat('-', 50) . "\\n";
+        foreach ($monthly_usage as $month) {
+            $email_body .= str_pad($month->month, 15) . str_pad($month->message_count, 20) . "\\n";
+        }
+        $headers = array('Content-Type: text/plain; charset=UTF-8');
+        $sent = wp_mail($email, $email_subject, $email_body, $headers);
+        if ($sent) { wp_send_json_success(array('message' => 'Analytics report sent successfully to ' . $email)); }
+        else { wp_send_json_error(array('message' => 'Failed to send email. Please check your WordPress email configuration.')); }
     }
 }
 

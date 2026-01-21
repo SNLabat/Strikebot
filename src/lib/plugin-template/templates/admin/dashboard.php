@@ -290,11 +290,16 @@ Examples:
     <div class="strikebot-card" style="margin-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Analytics</h2>
-            <div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="display: flex; gap: 4px; align-items: center; margin-right: 8px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb;">
+                    <input type="email" id="analytics-email-input" placeholder="Email address" style="border: none; padding: 4px 8px; font-size: 13px; min-width: 200px; background: transparent; outline: none;">
+                    <button type="button" class="button button-small" onclick="strikebotEmailAnalytics()" style="margin: 0; padding: 4px 12px; height: auto; font-size: 13px;">Email</button>
+                </div>
                 <button type="button" class="button" onclick="strikebotExportAnalytics('csv')" style="margin-right: 8px;">Export CSV</button>
                 <button type="button" class="button" onclick="strikebotExportAnalytics('json')">Export JSON</button>
             </div>
         </div>
+        <div id="strikebot-analytics-email-status" style="margin-bottom: 10px;"></div>
         <div id="strikebot-analytics-content">
             <p style="text-align: center; color: #666; padding: 20px;">Loading analytics...</p>
         </div>
@@ -304,11 +309,16 @@ Examples:
     <div class="strikebot-card" style="margin-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Chat Logs</h2>
-            <div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="display: flex; gap: 4px; align-items: center; margin-right: 8px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; background: #f9fafb;">
+                    <input type="email" id="logs-email-input" placeholder="Email address" style="border: none; padding: 4px 8px; font-size: 13px; min-width: 200px; background: transparent; outline: none;">
+                    <button type="button" class="button button-small" onclick="strikebotEmailLogs()" style="margin: 0; padding: 4px 12px; height: auto; font-size: 13px;">Email</button>
+                </div>
                 <button type="button" class="button" onclick="strikebotExportLogs('csv')" style="margin-right: 8px;">Export CSV</button>
                 <button type="button" class="button" onclick="strikebotExportLogs('json')">Export JSON</button>
             </div>
         </div>
+        <div id="strikebot-logs-email-status" style="margin-bottom: 10px;"></div>
         <div id="strikebot-chat-logs-content">
             <p style="text-align: center; color: #666; padding: 20px;">Loading chat logs...</p>
         </div>
@@ -483,6 +493,140 @@ Examples:
         var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
         window.location.href = ajaxUrl + '?action=strikebot_export_analytics&nonce=' + encodeURIComponent(nonce) + '&format=' + format;
     }
+
+    function strikebotEmailLogs() {
+        var emailInput = document.getElementById('logs-email-input');
+        var statusEl = document.getElementById('strikebot-logs-email-status');
+        var email = emailInput.value.trim();
+        
+        if (!email) {
+            statusEl.innerHTML = '<span style="color: #dc2626;">Please enter an email address</span>';
+            return;
+        }
+        
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            statusEl.innerHTML = '<span style="color: #dc2626;">Please enter a valid email address</span>';
+            return;
+        }
+        
+        statusEl.innerHTML = '<span style="color: #059669;">Sending email...</span>';
+        
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', ajaxUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            statusEl.innerHTML = '<span style="color: #059669;">✓ ' + response.data.message + '</span>';
+                            emailInput.value = '';
+                            setTimeout(function() {
+                                statusEl.innerHTML = '';
+                            }, 5000);
+                        } else {
+                            statusEl.innerHTML = '<span style="color: #dc2626;">✗ ' + (response.data && response.data.message ? response.data.message : 'Failed to send email') + '</span>';
+                        }
+                    } catch (e) {
+                        console.error('Parse error:', e);
+                        statusEl.innerHTML = '<span style="color: #dc2626;">✗ Invalid response from server</span>';
+                    }
+                } else {
+                    statusEl.innerHTML = '<span style="color: #dc2626;">✗ Request failed (status ' + xhr.status + ')</span>';
+                }
+            }
+        };
+        
+        xhr.onerror = function() {
+            statusEl.innerHTML = '<span style="color: #dc2626;">✗ Network error</span>';
+        };
+        
+        xhr.send('action=strikebot_email_logs&nonce=' + encodeURIComponent(nonce) + '&email=' + encodeURIComponent(email));
+    }
+
+    function strikebotEmailAnalytics() {
+        var emailInput = document.getElementById('analytics-email-input');
+        var statusEl = document.getElementById('strikebot-analytics-email-status');
+        var email = emailInput.value.trim();
+        
+        if (!email) {
+            statusEl.innerHTML = '<span style="color: #dc2626;">Please enter an email address</span>';
+            return;
+        }
+        
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            statusEl.innerHTML = '<span style="color: #dc2626;">Please enter a valid email address</span>';
+            return;
+        }
+        
+        statusEl.innerHTML = '<span style="color: #059669;">Sending email...</span>';
+        
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', ajaxUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            statusEl.innerHTML = '<span style="color: #059669;">✓ ' + response.data.message + '</span>';
+                            emailInput.value = '';
+                            setTimeout(function() {
+                                statusEl.innerHTML = '';
+                            }, 5000);
+                        } else {
+                            statusEl.innerHTML = '<span style="color: #dc2626;">✗ ' + (response.data && response.data.message ? response.data.message : 'Failed to send email') + '</span>';
+                        }
+                    } catch (e) {
+                        console.error('Parse error:', e);
+                        statusEl.innerHTML = '<span style="color: #dc2626;">✗ Invalid response from server</span>';
+                    }
+                } else {
+                    statusEl.innerHTML = '<span style="color: #dc2626;">✗ Request failed (status ' + xhr.status + ')</span>';
+                }
+            }
+        };
+        
+        xhr.onerror = function() {
+            statusEl.innerHTML = '<span style="color: #dc2626;">✗ Network error</span>';
+        };
+        
+        xhr.send('action=strikebot_email_analytics&nonce=' + encodeURIComponent(nonce) + '&email=' + encodeURIComponent(email));
+    }
+
+    // Allow Enter key to trigger email send
+    document.addEventListener('DOMContentLoaded', function() {
+        var logsEmailInput = document.getElementById('logs-email-input');
+        var analyticsEmailInput = document.getElementById('analytics-email-input');
+        
+        if (logsEmailInput) {
+            logsEmailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    strikebotEmailLogs();
+                }
+            });
+        }
+        
+        if (analyticsEmailInput) {
+            analyticsEmailInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    strikebotEmailAnalytics();
+                }
+            });
+        }
+    });
 
     function escapeHtml(text) {
         var div = document.createElement('div');
