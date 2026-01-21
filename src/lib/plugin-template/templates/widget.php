@@ -17,7 +17,7 @@ $iconUrl = $widget['iconUrl'] ?? '';
 $welcomeMessage = $widget['welcomeMessage'] ?? 'Hello! How can I help you today?';
 $placeholder = $widget['placeholder'] ?? 'Type your message...';
 
-// Check if branding removal add-on is active
+// Check if branding removal is enabled (either via add-on or setting)
 $removeBranding = false;
 if (is_array($addOns)) {
     foreach ($addOns as $addOn) {
@@ -26,6 +26,10 @@ if (is_array($addOns)) {
             break;
         }
     }
+}
+// Also check the removeBranding setting (can be toggled in dashboard if add-on is active)
+if ($removeBranding && isset($settings['removeBranding'])) {
+    $removeBranding = (bool) $settings['removeBranding'];
 }
 ?>
 
