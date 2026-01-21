@@ -160,7 +160,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
     <div class="strikebot-card" style="margin-top: 20px;">
         <h2>Chatbot Configuration</h2>
         <!-- Debug: instructions length = <?php echo strlen($settings['instructions'] ?? ''); ?>, removeBranding = <?php echo ($settings['removeBranding'] ?? false) ? 'true' : 'false'; ?> -->
-        <form id="strikebot-config-form" method="post">
+        <form id="strikebot-config-form" method="post" action="#" novalidate>
             <div class="strikebot-form-group">
                 <label for="chatbot-instructions">Instructions</label>
                 <textarea
@@ -191,7 +191,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
 
             <?php if ($hasRemoveBrandingAddon): ?>
             <div class="strikebot-form-group">
-                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <label for="remove-branding-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                     <input
                         type="checkbox"
                         id="remove-branding"
@@ -200,7 +200,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
                         <?php checked($settings['removeBranding'] ?? false); ?>
                         style="width: 18px; height: 18px; cursor: pointer;"
                     />
-                    <span style="font-weight: 500;">Remove "Powered by Strikebot" branding</span>
+                    <span id="remove-branding-label" style="font-weight: 500;">Remove "Powered by Strikebot" branding</span>
                 </label>
                 <p style="margin-top: 0.5rem; margin-left: 1.625rem; font-size: 0.875rem; color: #6b7280;">
                     Hide the "Powered by Strikebot" text from your chatbot widget.
@@ -208,7 +208,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
             </div>
             <?php endif; ?>
 
-            <button type="submit" class="button button-primary" id="config-save-btn">Save Configuration</button>
+            <button type="submit" class="button button-primary" id="config-save-btn" name="save_config">Save Configuration</button>
         </form>
     </div>
 

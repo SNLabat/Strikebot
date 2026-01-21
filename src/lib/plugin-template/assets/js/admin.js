@@ -794,14 +794,23 @@
         }
     });
 
-    // Chatbot configuration form - use delegated handler to ensure it works
-    $(document).on('submit', '#strikebot-config-form', function(e) {
-        console.log('Form submitted!');
+    // Chatbot configuration form handler
+    // Use both direct and delegated handlers for maximum compatibility
+    function handleConfigFormSubmit(e) {
+        console.log('Config form submit handler triggered!');
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
 
-        const instructions = $('#chatbot-instructions').val();
-        const removeBranding = $('#remove-branding').is(':checked');
+        const $form = $('#strikebot-config-form');
+        if ($form.length === 0) {
+            console.error('Config form not found!');
+            return false;
+        }
+
+        const instructions = $('#chatbot-instructions').val() || '';
+        const $removeBrandingCheckbox = $('#remove-branding');
+        const removeBranding = $removeBrandingCheckbox.length > 0 && $removeBrandingCheckbox.is(':checked');
         const $btn = $('#config-save-btn');
         const originalText = $btn.text();
 
@@ -810,8 +819,17 @@
             instructionsLength: instructions.length,
             removeBranding: removeBranding,
             ajaxUrl: strikebotAdmin.ajaxUrl,
-            nonce: strikebotAdmin.nonce
+            nonce: strikebotAdmin.nonce ? 'present' : 'missing'
         });
+
+        if (!strikebotAdmin.ajaxUrl || !strikebotAdmin.nonce) {
+            alert('Error: AJAX configuration missing. Please refresh the page and try again.');
+            console.error('Missing AJAX configuration:', {
+                ajaxUrl: strikebotAdmin.ajaxUrl,
+                nonce: strikebotAdmin.nonce
+            });
+            return false;
+        }
 
         // Disable button and show loading state
         $btn.prop('disabled', true).text('Saving...');
@@ -843,12 +861,28 @@
                         alert('Configuration saved successfully!');
                     }
                 } else {
-                    alert(response.data && response.data.message ? response.data.message : 'Error saving configuration');
+                    const errorMsg = response && response.data && response.data.message 
+                        ? response.data.message 
+                        : 'Error saving configuration';
+                    alert(errorMsg);
                 }
             },
             error: function(xhr, status, error) {
-                console.error('Save error:', { status: status, error: error, response: xhr.responseText });
-                alert('Error saving configuration. Please check the console for details and try again.');
+                console.error('Save error:', { 
+                    status: status, 
+                    error: error, 
+                    response: xhr.responseText,
+                    statusCode: xhr.status
+                });
+                let errorMsg = 'Error saving configuration. ';
+                if (xhr.status === 0) {
+                    errorMsg += 'Network error - please check your connection.';
+                } else if (xhr.status === 403) {
+                    errorMsg += 'Permission denied. Please refresh the page and try again.';
+                } else {
+                    errorMsg += 'Status: ' + status + '. Please check the console for details.';
+                }
+                alert(errorMsg);
             },
             complete: function() {
                 // Re-enable button
@@ -857,6 +891,27 @@
         });
 
         return false;
+    }
+
+    // Attach handler on document ready (direct binding)
+    $(document).ready(function() {
+        const $configForm = $('#strikebot-config-form');
+        if ($configForm.length > 0) {
+            console.log('Config form found, attaching submit handler...');
+            $configForm.off('submit').on('submit', handleConfigFormSubmit);
+            
+            // Also attach to button click as backup
+            $('#config-save-btn').off('click').on('click', function(e) {
+                e.preventDefault();
+                $configForm.trigger('submit');
+                return false;
+            });
+        } else {
+            console.log('Config form not found on page load');
+        }
     });
+
+    // Also use delegated handler as fallback
+    $(document).on('submit', '#strikebot-config-form', handleConfigFormSubmit);
 
 })(jQuery);
