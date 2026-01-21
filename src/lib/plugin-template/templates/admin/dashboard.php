@@ -147,7 +147,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
     <!-- Chatbot Configuration -->
     <div class="strikebot-card" style="margin-top: 20px;">
         <h2>Chatbot Configuration</h2>
-        <form id="strikebot-config-form">
+        <form id="strikebot-config-form" method="post" onsubmit="return false;">
             <div class="strikebot-form-group">
                 <label for="chatbot-instructions">Instructions</label>
                 <textarea
@@ -182,6 +182,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
                         type="checkbox"
                         id="remove-branding"
                         name="removeBranding"
+                        value="1"
                         <?php checked($settings['removeBranding'] ?? false); ?>
                         style="width: 18px; height: 18px; cursor: pointer;"
                     />
@@ -193,7 +194,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
             </div>
             <?php endif; ?>
 
-            <button type="submit" class="button button-primary">Save Configuration</button>
+            <button type="submit" class="button button-primary" id="config-save-btn">Save Configuration</button>
             <span id="config-save-status" style="margin-left: 1rem; color: #10b981; display: none;">✓ Saved</span>
         </form>
     </div>
