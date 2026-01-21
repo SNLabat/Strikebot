@@ -441,9 +441,16 @@ class Strikebot {
     private function build_system_prompt($context) {
         $settings = get_option('strikebot_settings');
         $name = $settings['name'] ?? 'Assistant';
+        $instructions = $settings['instructions'] ?? '';
 
         $prompt = "You are $name, a helpful AI assistant. ";
-        $prompt .= "Answer questions based on the following knowledge base:\n";
+        
+        // Add custom instructions if provided
+        if (!empty($instructions)) {
+            $prompt .= "\n\n" . trim($instructions) . "\n";
+        }
+        
+        $prompt .= "\nAnswer questions based on the following knowledge base:\n";
         $prompt .= $context;
         $prompt .= "\n\nIf you don't know the answer based on the knowledge base, say so politely.";
 
@@ -526,10 +533,37 @@ class Strikebot {
         if (isset($_POST['widget'])) {
             $settings['widget'] = array_map('sanitize_text_field', $_POST['widget']);
         }
+        
+        // Handle instructions (for chatbot configuration)
+        if (isset($_POST['instructions'])) {
+            $settings['instructions'] = sanitize_textarea_field($_POST['instructions']);
+        }
+        
+        // Handle removeBranding checkbox (for chatbot configuration)
+        if (isset($_POST['removeBranding'])) {
+            $settings['removeBranding'] = ($_POST['removeBranding'] === 'true' || $_POST['removeBranding'] === '1');
+        } else {
+            // If checkbox is not checked, it won't be sent, so set it to false
+            // Only do this if we're saving from the config form (indicated by instructions being set)
+            if (isset($_POST['instructions'])) {
+                $settings['removeBranding'] = false;
+            }
+        }
 
-        update_option('strikebot_settings', $settings);
+        $update_result = update_option('strikebot_settings', $settings);
+        
+        // Verify the save worked by reading back the values
+        $saved_settings = get_option('strikebot_settings');
+        $debug_info = array();
+        if (isset($_POST['instructions'])) {
+            $debug_info['saved_instructions_length'] = strlen($saved_settings['instructions'] ?? '');
+            $debug_info['verified_instructions_length'] = strlen($saved_settings['instructions'] ?? '');
+            $debug_info['saved_removeBranding'] = ($saved_settings['removeBranding'] ?? false) ? 'true' : 'false';
+            $debug_info['verified_removeBranding'] = ($saved_settings['removeBranding'] ?? false) ? 'true' : 'false';
+            $debug_info['update_result'] = $update_result;
+        }
 
-        wp_send_json_success(array('message' => 'Settings saved'));
+        wp_send_json_success(array('message' => 'Settings saved', 'debug' => $debug_info));
     }
 
     public function save_admin_theme() {

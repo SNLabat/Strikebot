@@ -794,11 +794,9 @@
         }
     });
 
-    // Chatbot configuration form
-    $(document).ready(function() {
-        console.log('Attaching configuration form handler...');
-        $('#strikebot-config-form').on('submit', function(e) {
-            console.log('Form submitted!');
+    // Chatbot configuration form - use delegated handler to ensure it works
+    $(document).on('submit', '#strikebot-config-form', function(e) {
+        console.log('Form submitted!');
         e.preventDefault();
         e.stopPropagation();
 
@@ -810,7 +808,9 @@
         console.log('Saving configuration:', {
             instructions: instructions,
             instructionsLength: instructions.length,
-            removeBranding: removeBranding
+            removeBranding: removeBranding,
+            ajaxUrl: strikebotAdmin.ajaxUrl,
+            nonce: strikebotAdmin.nonce
         });
 
         // Disable button and show loading state
@@ -827,26 +827,28 @@
             },
             success: function(response) {
                 console.log('Save response:', response);
-                if (response.success && response.data.debug) {
-                    const debug = response.data.debug;
-                    let message = 'Configuration saved successfully!\n\n';
-                    message += '=== SAVED VALUES ===\n';
-                    message += 'Instructions: ' + debug.saved_instructions_length + ' chars\n';
-                    message += 'Remove Branding: ' + debug.saved_removeBranding + '\n\n';
-                    message += '=== VERIFIED FROM DATABASE ===\n';
-                    message += 'Instructions: ' + debug.verified_instructions_length + ' chars\n';
-                    message += 'Remove Branding: ' + debug.verified_removeBranding + '\n\n';
-                    message += 'Update Result: ' + (debug.update_result ? 'Changed' : 'No change (same value)');
-                    alert(message);
-                } else if (response.success) {
-                    alert('Configuration saved successfully!');
+                if (response && response.success) {
+                    if (response.data && response.data.debug) {
+                        const debug = response.data.debug;
+                        let message = 'Configuration saved successfully!\n\n';
+                        message += '=== SAVED VALUES ===\n';
+                        message += 'Instructions: ' + debug.saved_instructions_length + ' chars\n';
+                        message += 'Remove Branding: ' + debug.saved_removeBranding + '\n\n';
+                        message += '=== VERIFIED FROM DATABASE ===\n';
+                        message += 'Instructions: ' + debug.verified_instructions_length + ' chars\n';
+                        message += 'Remove Branding: ' + debug.verified_removeBranding + '\n\n';
+                        message += 'Update Result: ' + (debug.update_result ? 'Changed' : 'No change (same value)');
+                        alert(message);
+                    } else {
+                        alert('Configuration saved successfully!');
+                    }
                 } else {
-                    alert(response.data.message || 'Error saving configuration');
+                    alert(response.data && response.data.message ? response.data.message : 'Error saving configuration');
                 }
             },
             error: function(xhr, status, error) {
                 console.error('Save error:', { status: status, error: error, response: xhr.responseText });
-                alert('Error saving configuration. Please try again.');
+                alert('Error saving configuration. Please check the console for details and try again.');
             },
             complete: function() {
                 // Re-enable button
@@ -855,7 +857,6 @@
         });
 
         return false;
-        });
     });
 
 })(jQuery);

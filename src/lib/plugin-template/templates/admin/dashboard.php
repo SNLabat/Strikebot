@@ -160,7 +160,7 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
     <div class="strikebot-card" style="margin-top: 20px;">
         <h2>Chatbot Configuration</h2>
         <!-- Debug: instructions length = <?php echo strlen($settings['instructions'] ?? ''); ?>, removeBranding = <?php echo ($settings['removeBranding'] ?? false) ? 'true' : 'false'; ?> -->
-        <form id="strikebot-config-form" method="post" onsubmit="return false;">
+        <form id="strikebot-config-form" method="post">
             <div class="strikebot-form-group">
                 <label for="chatbot-instructions">Instructions</label>
                 <textarea
