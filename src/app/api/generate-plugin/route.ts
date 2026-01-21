@@ -451,7 +451,29 @@ class Strikebot {
         if (!empty($metadata_to_store) && !(substr($metadata_to_store, 0, 1) === '{' && substr($metadata_to_store, -1) === '}')) {
             $metadata_to_store = sanitize_text_field($metadata_to_store);
         }
-        $insert_result = $wpdb->insert($table, array('type' => $type, 'name' => sanitize_text_field($_POST['name'] ?? ''), 'content' => $new_content, 'metadata' => $metadata_to_store, 'created_at' => current_time('mysql')));
+        $name = sanitize_text_field($_POST['name'] ?? '');
+        if ($type === 'url') {
+            $normalized_url = rtrim(strtolower($name), '/');
+            $actual_url = $name;
+            if (!empty($metadata_to_store)) {
+                $metadata_decoded = json_decode($metadata_to_store, true);
+                if ($metadata_decoded && isset($metadata_decoded['crawled_url'])) {
+                    $actual_url = $metadata_decoded['crawled_url'];
+                    $normalized_url = rtrim(strtolower($actual_url), '/');
+                }
+            }
+            $existing = $wpdb->get_row($wpdb->prepare("SELECT id, name, metadata FROM $table WHERE type = 'url' AND (name = %s OR LOWER(TRIM(TRAILING '/' FROM name)) = %s) LIMIT 1", $name, $normalized_url));
+            if (!$existing && !empty($metadata_to_store)) {
+                $metadata_decoded = json_decode($metadata_to_store, true);
+                if ($metadata_decoded && isset($metadata_decoded['crawled_url'])) {
+                    $crawled_url = $metadata_decoded['crawled_url'];
+                    $normalized_crawled = rtrim(strtolower($crawled_url), '/');
+                    $existing = $wpdb->get_row($wpdb->prepare("SELECT id, name, metadata FROM $table WHERE type = 'url' AND (metadata LIKE %s OR metadata LIKE %s OR name = %s OR LOWER(TRIM(TRAILING '/' FROM name)) = %s) LIMIT 1", '%"crawled_url":"' . $wpdb->esc_like($crawled_url) . '"%', '%"crawled_url":"' . $wpdb->esc_like($normalized_crawled) . '"%', $crawled_url, $normalized_crawled));
+                }
+            }
+            if ($existing) { wp_send_json_error(array('message' => 'This URL already exists in the knowledge base: ' . $existing->name, 'duplicate_id' => $existing->id, 'is_duplicate' => true)); }
+        }
+        $insert_result = $wpdb->insert($table, array('type' => $type, 'name' => $name, 'content' => $new_content, 'metadata' => $metadata_to_store, 'created_at' => current_time('mysql')));
         if ($insert_result === false) { wp_send_json_error(array('message' => 'Failed to save knowledge: ' . $wpdb->last_error)); }
         wp_send_json_success(array('message' => 'Knowledge added', 'id' => $wpdb->insert_id));
     }

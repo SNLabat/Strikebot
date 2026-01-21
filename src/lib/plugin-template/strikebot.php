@@ -704,9 +704,64 @@ class Strikebot {
             $metadata_to_store = sanitize_text_field($metadata_to_store);
         }
         
+        $name = sanitize_text_field($_POST['name'] ?? '');
+        
+        // Check for duplicate URLs (for URL type entries)
+        if ($type === 'url') {
+            // Normalize URL for comparison (remove trailing slash, convert to lowercase)
+            $normalized_url = rtrim(strtolower($name), '/');
+            
+            // Extract actual URL from metadata if available (for sitemap crawls)
+            $actual_url = $name;
+            if (!empty($metadata_to_store)) {
+                $metadata_decoded = json_decode($metadata_to_store, true);
+                if ($metadata_decoded && isset($metadata_decoded['crawled_url'])) {
+                    $actual_url = $metadata_decoded['crawled_url'];
+                    $normalized_url = rtrim(strtolower($actual_url), '/');
+                }
+            }
+            
+            // Check if this URL already exists
+            // Check by name field (exact and normalized)
+            $existing = $wpdb->get_row($wpdb->prepare(
+                "SELECT id, name, metadata FROM $table WHERE type = 'url' AND (name = %s OR LOWER(TRIM(TRAILING '/' FROM name)) = %s) LIMIT 1",
+                $name,
+                $normalized_url
+            ));
+            
+            // Also check metadata for crawled_url field
+            if (!$existing && !empty($metadata_to_store)) {
+                $metadata_decoded = json_decode($metadata_to_store, true);
+                if ($metadata_decoded && isset($metadata_decoded['crawled_url'])) {
+                    $crawled_url = $metadata_decoded['crawled_url'];
+                    $normalized_crawled = rtrim(strtolower($crawled_url), '/');
+                    $existing = $wpdb->get_row($wpdb->prepare(
+                        "SELECT id, name, metadata FROM $table WHERE type = 'url' AND (
+                            metadata LIKE %s OR 
+                            metadata LIKE %s OR
+                            name = %s OR 
+                            LOWER(TRIM(TRAILING '/' FROM name)) = %s
+                        ) LIMIT 1",
+                        '%"crawled_url":"' . $wpdb->esc_like($crawled_url) . '"%',
+                        '%"crawled_url":"' . $wpdb->esc_like($normalized_crawled) . '"%',
+                        $crawled_url,
+                        $normalized_crawled
+                    ));
+                }
+            }
+            
+            if ($existing) {
+                wp_send_json_error(array(
+                    'message' => 'This URL already exists in the knowledge base: ' . $existing->name,
+                    'duplicate_id' => $existing->id,
+                    'is_duplicate' => true
+                ));
+            }
+        }
+        
         $insert_result = $wpdb->insert($table, array(
             'type' => $type,
-            'name' => sanitize_text_field($_POST['name'] ?? ''),
+            'name' => $name,
             'content' => $new_content,
             'metadata' => $metadata_to_store,
             'created_at' => current_time('mysql')

@@ -118,16 +118,30 @@
         let completed = 0;
         let saved = 0;
         let failed = 0;
+        let skipped = 0;
         const errors = [];
+        const skipped_urls = [];
         
         function updateStatus() {
-            $btn.text('Processing ' + completed + '/' + urls.length + ' (Saved: ' + saved + ', Failed: ' + failed + ')');
+            let statusText = 'Processing ' + completed + '/' + urls.length + ' (Saved: ' + saved;
+            if (skipped > 0) statusText += ', Skipped: ' + skipped;
+            if (failed > 0) statusText += ', Failed: ' + failed;
+            statusText += ')';
+            $btn.text(statusText);
         }
         
         function checkComplete() {
             if (completed === urls.length) {
                 $btn.prop('disabled', false).text('Crawl Selected URLs');
-                let message = 'Crawl complete!\n\nSaved: ' + saved + '\nFailed: ' + failed + '\nTotal: ' + urls.length;
+                let message = 'Crawl complete!\n\nSaved: ' + saved;
+                if (skipped > 0) {
+                    message += '\nSkipped (duplicates): ' + skipped;
+                }
+                message += '\nFailed: ' + failed + '\nTotal: ' + urls.length;
+                
+                if (skipped > 0 && skipped_urls.length > 0) {
+                    message += '\n\nSkipped URLs:\n' + skipped_urls.slice(0, 10).join('\n');
+                }
                 if (failed > 0 && errors.length > 0) {
                     message += '\n\nErrors:\n' + errors.slice(0, 10).join('\n');
                 }
@@ -183,10 +197,17 @@
                                     saved++;
                                     console.log('Successfully saved:', url);
                                 } else {
-                                    failed++;
-                                    const errorMsg = (saveResponse && saveResponse.data && saveResponse.data.message) ? saveResponse.data.message : 'Unknown save error';
-                                    errors.push(url + ': ' + errorMsg);
-                                    console.error('Save failed for', url, ':', errorMsg);
+                                    // Check if it's a duplicate
+                                    if (saveResponse && saveResponse.data && saveResponse.data.is_duplicate) {
+                                        skipped++;
+                                        skipped_urls.push(url + ': Already exists');
+                                        console.log('Skipped duplicate:', url);
+                                    } else {
+                                        failed++;
+                                        const errorMsg = (saveResponse && saveResponse.data && saveResponse.data.message) ? saveResponse.data.message : 'Unknown save error';
+                                        errors.push(url + ': ' + errorMsg);
+                                        console.error('Save failed for', url, ':', errorMsg);
+                                    }
                                 }
                             },
                             error: function(xhr, status, error) {
@@ -268,7 +289,12 @@
                                 alert('URL crawled and saved successfully!');
                                 location.reload();
                             } else {
-                                alert(saveResponse.data.message || 'Error saving content');
+                                const errorMsg = saveResponse.data && saveResponse.data.message ? saveResponse.data.message : 'Error saving content';
+                                if (saveResponse.data && saveResponse.data.is_duplicate) {
+                                    alert('This URL already exists in the knowledge base.\n\n' + errorMsg);
+                                } else {
+                                    alert('Error saving content: ' + errorMsg);
+                                }
                             }
                         }
                     });
