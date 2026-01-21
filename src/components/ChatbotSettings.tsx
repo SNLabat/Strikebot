@@ -110,7 +110,7 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
         {/* Limits Summary */}
         <div className="bg-slate-700/30 rounded-lg p-4 mt-8 border border-slate-600/50">
           <h3 className="font-medium text-white mb-4">Current Limits ({tierConfig.displayName})</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
               <p className="text-slate-400">Message Credits</p>
               <p className="font-medium text-white">{config.limits.messageCreditsPerMonth.toLocaleString()}/month</p>
@@ -121,14 +121,6 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
                 {config.limits.storageLimitMB >= 1
                   ? `${config.limits.storageLimitMB} MB`
                   : `${config.limits.storageLimitMB * 1024} KB`}
-              </p>
-            </div>
-            <div>
-              <p className="text-slate-400">AI Actions</p>
-              <p className="font-medium text-white">
-                {config.limits.aiActionsPerAgent > 0
-                  ? `${config.limits.aiActionsPerAgent} per agent`
-                  : 'Not available'}
               </p>
             </div>
             <div>
@@ -146,11 +138,6 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
         <div className="bg-slate-700/30 rounded-lg p-4 border border-slate-600/50">
           <h3 className="font-medium text-white mb-4">Enabled Features</h3>
           <div className="flex flex-wrap gap-2">
-            {config.features.integrations && (
-              <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm border border-green-500/30">
-                Integrations
-              </span>
-            )}
             {config.features.apiAccess && (
               <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm border border-green-500/30">
                 API Access

@@ -27,11 +27,9 @@ interface ChatbotConfig {
   limits: {
     messageCreditsPerMonth: number;
     storageLimitMB: number;
-    aiActionsPerAgent: number;
     linkTrainingLimit: number | null;
   };
   features: {
-    integrations: boolean;
     apiAccess: boolean;
     analytics: string;
     autoRetrain: boolean;

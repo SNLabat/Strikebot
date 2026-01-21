@@ -90,7 +90,9 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
                 <div class="strikebot-stat-value"><?php echo number_format($knowledge_count); ?></div>
                 <div class="strikebot-stat-label">items</div>
             </div>
-            <a href="<?php echo admin_url('admin.php?page=strikebot-knowledge'); ?>" class="button button-primary">Manage Knowledge Base</a>
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="<?php echo admin_url('admin.php?page=strikebot-knowledge'); ?>" class="button button-primary">Manage Knowledge Base</a>
+            </div>
         </div>
 
         <!-- Plan Info -->
@@ -126,18 +128,6 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
                     <span class="dashicons dashicons-yes-alt"></span>
                     <span><?php echo size_format($storage_limit); ?> storage</span>
                 </div>
-                <?php if (($settings['limits']['aiActionsPerAgent'] ?? 0) > 0): ?>
-                <div class="strikebot-feature">
-                    <span class="dashicons dashicons-yes-alt"></span>
-                    <span><?php echo $settings['limits']['aiActionsPerAgent']; ?> AI actions</span>
-                </div>
-                <?php endif; ?>
-                <?php if (($settings['features']['integrations'] ?? false)): ?>
-                <div class="strikebot-feature">
-                    <span class="dashicons dashicons-yes-alt"></span>
-                    <span>Integrations enabled</span>
-                </div>
-                <?php endif; ?>
                 <?php if (($settings['features']['apiAccess'] ?? false)): ?>
                 <div class="strikebot-feature">
                     <span class="dashicons dashicons-yes-alt"></span>

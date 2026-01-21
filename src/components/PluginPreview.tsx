@@ -72,14 +72,6 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
                 </dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-slate-400">AI Actions</dt>
-                <dd className="font-medium text-white">
-                  {config.limits.aiActionsPerAgent > 0
-                    ? `${config.limits.aiActionsPerAgent} per agent`
-                    : 'Not available'}
-                </dd>
-              </div>
-              <div className="flex justify-between">
                 <dt className="text-slate-400">Training Links</dt>
                 <dd className="font-medium text-white">
                   {config.limits.linkTrainingLimit === null
@@ -97,16 +89,6 @@ export default function PluginPreview({ config }: PluginPreviewProps) {
               <h3 className="font-semibold text-white">Features</h3>
             </div>
             <ul className="space-y-2">
-              <li className="flex items-center gap-2">
-                {config.features.integrations ? (
-                  <Check className="w-4 h-4 text-green-400" />
-                ) : (
-                  <X className="w-4 h-4 text-slate-500" />
-                )}
-                <span className={config.features.integrations ? 'text-slate-300' : 'text-slate-500'}>
-                  Integrations (Zendesk, WhatsApp, etc.)
-                </span>
-              </li>
               <li className="flex items-center gap-2">
                 {config.features.apiAccess ? (
                   <Check className="w-4 h-4 text-green-400" />
