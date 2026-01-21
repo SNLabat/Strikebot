@@ -107,6 +107,7 @@ class Strikebot {
         add_action('wp_ajax_strikebot_export_analytics', array($this, 'export_analytics'));
         add_action('wp_ajax_strikebot_email_logs', array($this, 'email_logs'));
         add_action('wp_ajax_strikebot_email_analytics', array($this, 'email_analytics'));
+        add_action('wp_ajax_strikebot_debug_urls', array($this, 'debug_urls'));
     }
 
     public function activate() {
@@ -458,16 +459,16 @@ class Strikebot {
                 $metadata_decoded = json_decode($metadata_to_store, true);
                 if ($metadata_decoded && isset($metadata_decoded['crawled_url'])) { $url_to_check = $metadata_decoded['crawled_url']; }
             }
-            $normalized_url = rtrim(strtolower($url_to_check), '/');
+            $normalized_url = $this->normalize_url($url_to_check);
             $existing_urls = $wpdb->get_results("SELECT id, name, metadata FROM $table WHERE type = 'url'");
             $existing = null;
             foreach ($existing_urls as $entry) {
-                $existing_normalized = rtrim(strtolower($entry->name), '/');
+                $existing_normalized = $this->normalize_url($entry->name);
                 if ($existing_normalized === $normalized_url) { $existing = $entry; break; }
                 if (!empty($entry->metadata)) {
                     $entry_metadata = json_decode($entry->metadata, true);
-                    if ($entry_metadata && isset($entry_metadata['crawled_url'])) {
-                        $existing_crawled = rtrim(strtolower($entry_metadata['crawled_url']), '/');
+                    if (json_last_error() === JSON_ERROR_NONE && $entry_metadata && isset($entry_metadata['crawled_url'])) {
+                        $existing_crawled = $this->normalize_url($entry_metadata['crawled_url']);
                         if ($existing_crawled === $normalized_url) { $existing = $entry; break; }
                     }
                 }
@@ -541,6 +542,18 @@ class Strikebot {
         wp_send_json_success(array('content' => $content, 'content_length' => strlen($content), 'url' => $url));
     }
 
+    private function normalize_url($url) {
+        if (empty($url)) { return ''; }
+        $parsed = parse_url($url);
+        if (!$parsed) { return rtrim(strtolower(trim($url)), '/'); }
+        $scheme = isset($parsed['scheme']) ? strtolower($parsed['scheme']) : 'https';
+        $host = isset($parsed['host']) ? strtolower($parsed['host']) : '';
+        if (strpos($host, 'www.') === 0) { $host = substr($host, 4); }
+        $path = isset($parsed['path']) ? rtrim($parsed['path'], '/') : '';
+        if ($path === '/') { $path = ''; }
+        $normalized = $scheme . '://' . $host . $path;
+        return strtolower(rtrim($normalized, '/'));
+    }
     private function extract_text_from_html($html) {
         $html = preg_replace('/<script[^>]*>.*?<\\/script>/is', '', $html);
         $html = preg_replace('/<style[^>]*>.*?<\\/style>/is', '', $html);
@@ -736,6 +749,26 @@ class Strikebot {
         $sent = wp_mail($email, $email_subject, $email_body, $headers);
         if ($sent) { wp_send_json_success(array('message' => 'Analytics report sent successfully to ' . $email)); }
         else { wp_send_json_error(array('message' => 'Failed to send email. Please check your WordPress email configuration.')); }
+    }
+
+    public function debug_urls() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+        if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_knowledge';
+        $urls = $wpdb->get_results("SELECT id, name, metadata, created_at FROM $table WHERE type = 'url' ORDER BY created_at DESC");
+        $url_list = array();
+        foreach ($urls as $url_entry) {
+            $normalized = $this->normalize_url($url_entry->name);
+            $metadata_decoded = null;
+            $crawled_url = null;
+            if (!empty($url_entry->metadata)) {
+                $metadata_decoded = json_decode($url_entry->metadata, true);
+                if ($metadata_decoded && isset($metadata_decoded['crawled_url'])) { $crawled_url = $metadata_decoded['crawled_url']; }
+            }
+            $url_list[] = array('id' => $url_entry->id, 'name' => $url_entry->name, 'normalized' => $normalized, 'crawled_url' => $crawled_url, 'metadata' => $url_entry->metadata, 'created_at' => $url_entry->created_at);
+        }
+        wp_send_json_success(array('total_urls' => count($url_list), 'urls' => $url_list));
     }
 }
 
