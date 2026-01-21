@@ -9,12 +9,33 @@ $usage_table = $wpdb->prefix . 'strikebot_usage';
 $month = date('Y-m');
 $usage = $wpdb->get_row($wpdb->prepare("SELECT * FROM $usage_table WHERE month = %s", $month));
 $message_count = $usage ? $usage->message_count : 0;
-$message_limit = $settings['limits']['messageCreditsPerMonth'] ?? 50;
+$message_limit = $settings['limits']['messageCreditsPerMonth'] ?? 10000;
+
+// Add extra messages from add-ons
+$addOns = $settings['addOns'] ?? array();
+$extra_messages = 0;
+foreach ($addOns as $addOn) {
+    if ($addOn['type'] === 'extra_messages' && isset($addOn['value'])) {
+        $extra_messages += $addOn['value'];
+    }
+}
+$total_message_limit = $message_limit + $extra_messages;
 
 $knowledge_table = $wpdb->prefix . 'strikebot_knowledge';
 $knowledge_count = $wpdb->get_var("SELECT COUNT(*) FROM $knowledge_table");
 $storage_used = $wpdb->get_var("SELECT SUM(LENGTH(content)) FROM $knowledge_table") ?? 0;
-$storage_limit = ($settings['limits']['storageLimitMB'] ?? 0.4) * 1024 * 1024;
+$storage_limit = ($settings['limits']['storageLimitMB'] ?? 50) * 1024 * 1024;
+
+// Tier info
+$tier_names = array(
+    'starter' => 'Starter',
+    'professional' => 'Professional',
+    'business' => 'Business',
+    'enterprise' => 'Enterprise'
+);
+$tier = $settings['tier'] ?? 'starter';
+$tier_name = $tier_names[$tier] ?? ucfirst($tier);
+$billing_period = $settings['billingPeriod'] ?? 'monthly';
 ?>
 
 <?php
@@ -36,9 +57,16 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
             <h2>Usage This Month</h2>
             <div class="strikebot-stat">
                 <div class="strikebot-stat-value"><?php echo number_format($message_count); ?></div>
-                <div class="strikebot-stat-label">of <?php echo number_format($message_limit); ?> messages</div>
+                <div class="strikebot-stat-label">
+                    of <?php echo number_format($total_message_limit); ?> messages
+                    <?php if ($extra_messages > 0): ?>
+                        <span style="color: #10b981; font-size: 0.875em;">
+                            (<?php echo number_format($message_limit); ?> + <?php echo number_format($extra_messages); ?> extra)
+                        </span>
+                    <?php endif; ?>
+                </div>
                 <div class="strikebot-progress">
-                    <div class="strikebot-progress-bar" style="width: <?php echo min(100, ($message_count / $message_limit) * 100); ?>%"></div>
+                    <div class="strikebot-progress-bar" style="width: <?php echo min(100, ($message_count / $total_message_limit) * 100); ?>%"></div>
                 </div>
             </div>
         </div>
@@ -68,6 +96,27 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
         <!-- Plan Info -->
         <div class="strikebot-card strikebot-plan-card">
             <h2>Plan Details</h2>
+            <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
+                <div style="font-size: 1.25rem; font-weight: 600; color: #f97316; margin-bottom: 0.25rem;">
+                    <?php echo esc_html($tier_name); ?> Plan
+                </div>
+                <div style="font-size: 0.875rem; color: #6b7280;">
+                    Billed <?php echo esc_html($billing_period); ?>
+                </div>
+            </div>
+
+            <?php if (!empty($addOns)): ?>
+            <div style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e5e7eb;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: #374151;">Active Add-Ons</div>
+                <?php foreach ($addOns as $addOn): ?>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.375rem; padding: 0.5rem; background: #fef3c7; border-radius: 0.375rem;">
+                    <span class="dashicons dashicons-star-filled" style="color: #f59e0b;"></span>
+                    <span style="color: #92400e; font-weight: 500;"><?php echo esc_html($addOn['name']); ?></span>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
             <div class="strikebot-plan-features">
                 <div class="strikebot-feature">
                     <span class="dashicons dashicons-yes-alt"></span>

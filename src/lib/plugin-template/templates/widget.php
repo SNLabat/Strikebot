@@ -5,6 +5,7 @@ $settings = get_option('strikebot_settings');
 $theme = $settings['theme'] ?? array();
 $widget = $settings['widget'] ?? array();
 $name = $settings['name'] ?? 'Chatbot';
+$addOns = $settings['addOns'] ?? array();
 
 $position = $widget['position'] ?? 'bottom-right';
 $mode = $theme['mode'] ?? 'light';
@@ -15,6 +16,15 @@ $textColor = $mode === 'dark' ? '#F9FAFB' : '#1F2937';
 $iconUrl = $widget['iconUrl'] ?? '';
 $welcomeMessage = $widget['welcomeMessage'] ?? 'Hello! How can I help you today?';
 $placeholder = $widget['placeholder'] ?? 'Type your message...';
+
+// Check if branding removal add-on is active
+$removeBranding = false;
+foreach ($addOns as $addOn) {
+    if ($addOn['type'] === 'remove_branding') {
+        $removeBranding = true;
+        break;
+    }
+}
 ?>
 
 <div id="strikebot-widget"
@@ -82,9 +92,11 @@ $placeholder = $widget['placeholder'] ?? 'Type your message...';
         </div>
 
         <!-- Powered By -->
+        <?php if (!$removeBranding): ?>
         <div class="strikebot-powered-by">
             Powered by Strikebot
         </div>
+        <?php endif; ?>
     </div>
 
     <!-- Toggle Button -->

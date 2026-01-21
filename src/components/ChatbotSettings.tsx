@@ -10,9 +10,16 @@ interface ChatbotSettingsProps {
 
 export default function ChatbotSettings({ config, onConfigChange }: ChatbotSettingsProps) {
   const tierConfig = TIER_CONFIGS[config.tier];
-  const availableModels = AVAILABLE_MODELS.filter(
-    m => tierConfig.features.modelAccess === 'advanced' || m.tier === 'limited'
-  );
+
+  // Define tier hierarchy for model access
+  const tierHierarchy = ['starter', 'professional', 'business', 'enterprise'];
+  const currentTierIndex = tierHierarchy.indexOf(config.tier);
+
+  // Filter models based on tier hierarchy
+  const availableModels = AVAILABLE_MODELS.filter(model => {
+    const modelTierIndex = tierHierarchy.indexOf(model.tier as string);
+    return modelTierIndex <= currentTierIndex;
+  });
 
   return (
     <div>
@@ -57,9 +64,9 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
               </option>
             ))}
           </select>
-          {tierConfig.features.modelAccess === 'limited' && (
+          {config.tier === 'starter' && (
             <p className="text-xs text-amber-400 mt-1">
-              Upgrade to Hobby or higher to access advanced models
+              Upgrade to Professional or higher to access more models
             </p>
           )}
         </div>
@@ -160,7 +167,7 @@ export default function ChatbotSettings({ config, onConfigChange }: ChatbotSetti
               </span>
             )}
             <span className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm border border-orange-500/30">
-              {config.features.modelAccess === 'advanced' ? 'Advanced' : 'Basic'} Models
+              {availableModels.length} Model{availableModels.length > 1 ? 's' : ''} Available
             </span>
           </div>
         </div>

@@ -2,22 +2,26 @@
 
 import { useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { TIER_CONFIGS, AVAILABLE_MODELS, ChatbotConfig, TierName } from '@/types/chatbot';
+import { TIER_CONFIGS, AVAILABLE_MODELS, ChatbotConfig, TierName, BillingPeriod, AddOn } from '@/types/chatbot';
 import TierSelector from '@/components/TierSelector';
+import AddOnsSelector from '@/components/AddOnsSelector';
 import ChatbotSettings from '@/components/ChatbotSettings';
 import ThemeCustomizer from '@/components/ThemeCustomizer';
 import WidgetSettings from '@/components/WidgetSettings';
 import PluginPreview from '@/components/PluginPreview';
-import { Download, Bot, Settings, Palette, MessageSquare, Eye } from 'lucide-react';
+import { Download, Bot, Settings, Palette, MessageSquare, Eye, PlusCircle } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'tier' | 'settings' | 'theme' | 'widget' | 'preview'>('tier');
+  const [activeTab, setActiveTab] = useState<'tier' | 'addons' | 'settings' | 'theme' | 'widget' | 'preview'>('tier');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
   const [config, setConfig] = useState<ChatbotConfig>({
     id: uuidv4(),
     name: 'My Chatbot',
-    tier: 'free',
-    model: 'gpt-4.1-nano',
+    tier: 'starter',
+    billingPeriod: 'monthly',
+    addOns: [],
+    model: 'gpt-4o-mini',
     apiKey: '',
     apiEndpoint: 'https://api.openai.com/v1',
     theme: {
@@ -34,19 +38,19 @@ export default function Home() {
       iconUrl: '',
     },
     limits: {
-      messageCreditsPerMonth: TIER_CONFIGS.free.features.messageCreditsPerMonth,
-      storageLimitMB: TIER_CONFIGS.free.features.storageLimitMB,
-      aiActionsPerAgent: TIER_CONFIGS.free.features.aiActionsPerAgent,
-      linkTrainingLimit: TIER_CONFIGS.free.features.linkTrainingLimit === 'unlimited'
+      messageCreditsPerMonth: TIER_CONFIGS.starter.features.messageCreditsPerMonth,
+      storageLimitMB: TIER_CONFIGS.starter.features.storageLimitMB,
+      aiActionsPerAgent: TIER_CONFIGS.starter.features.aiActionsPerAgent,
+      linkTrainingLimit: TIER_CONFIGS.starter.features.linkTrainingLimit === 'unlimited'
         ? null
-        : TIER_CONFIGS.free.features.linkTrainingLimit,
+        : TIER_CONFIGS.starter.features.linkTrainingLimit,
     },
     features: {
-      integrations: TIER_CONFIGS.free.features.integrations,
-      apiAccess: TIER_CONFIGS.free.features.apiAccess,
-      analytics: TIER_CONFIGS.free.features.analytics,
-      autoRetrain: TIER_CONFIGS.free.features.autoRetrain,
-      modelAccess: TIER_CONFIGS.free.features.modelAccess,
+      integrations: TIER_CONFIGS.starter.features.integrations,
+      apiAccess: TIER_CONFIGS.starter.features.apiAccess,
+      analytics: TIER_CONFIGS.starter.features.analytics,
+      autoRetrain: TIER_CONFIGS.starter.features.autoRetrain,
+      modelAccess: TIER_CONFIGS.starter.features.modelAccess,
     },
     createdAt: new Date().toISOString(),
   });
@@ -56,7 +60,7 @@ export default function Home() {
 
     // Reset model if current model is not available for the new tier
     const availableModels = AVAILABLE_MODELS.filter(
-      m => tierConfig.features.modelAccess === 'advanced' || m.tier === 'limited'
+      m => m.tier === tier || m.tier === 'starter'
     );
     const currentModelAvailable = availableModels.some(m => m.id === config.model);
 
@@ -79,6 +83,21 @@ export default function Home() {
         autoRetrain: tierConfig.features.autoRetrain,
         modelAccess: tierConfig.features.modelAccess,
       },
+    });
+  };
+
+  const handleBillingPeriodChange = (period: BillingPeriod) => {
+    setBillingPeriod(period);
+    setConfig({
+      ...config,
+      billingPeriod: period,
+    });
+  };
+
+  const handleAddOnsChange = (addOns: AddOn[]) => {
+    setConfig({
+      ...config,
+      addOns,
     });
   };
 
@@ -120,7 +139,8 @@ export default function Home() {
   };
 
   const tabs = [
-    { id: 'tier', label: 'Tier Selection', icon: Bot },
+    { id: 'tier', label: 'Plan', icon: Bot },
+    { id: 'addons', label: 'Add-Ons', icon: PlusCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'theme', label: 'Theme', icon: Palette },
     { id: 'widget', label: 'Widget', icon: MessageSquare },
@@ -177,6 +197,14 @@ export default function Home() {
             <TierSelector
               selectedTier={config.tier}
               onTierChange={handleTierChange}
+              billingPeriod={billingPeriod}
+              onBillingPeriodChange={handleBillingPeriodChange}
+            />
+          )}
+          {activeTab === 'addons' && (
+            <AddOnsSelector
+              selectedAddOns={config.addOns}
+              onAddOnsChange={handleAddOnsChange}
             />
           )}
           {activeTab === 'settings' && (
@@ -207,8 +235,23 @@ export default function Home() {
           <h3 className="text-lg font-semibold text-white mb-4">Configuration Summary</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <p className="text-sm text-slate-400">Tier</p>
-              <p className="font-medium text-white">{TIER_CONFIGS[config.tier].displayName}</p>
+              <p className="text-sm text-slate-400">Plan</p>
+              <p className="font-medium text-white">
+                {TIER_CONFIGS[config.tier].displayName} ({config.billingPeriod})
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-slate-400">Monthly Price</p>
+              <p className="font-medium text-white">
+                ${config.billingPeriod === 'monthly'
+                  ? TIER_CONFIGS[config.tier].pricing.monthly
+                  : TIER_CONFIGS[config.tier].pricing.annualMonthly}
+                {config.addOns.length > 0 && (
+                  <span className="text-green-400">
+                    {' '}+ ${config.addOns.reduce((sum, a) => sum + a.price, 0)}
+                  </span>
+                )}
+              </p>
             </div>
             <div>
               <p className="text-sm text-slate-400">Model</p>
@@ -218,17 +261,29 @@ export default function Home() {
             </div>
             <div>
               <p className="text-sm text-slate-400">Message Credits</p>
-              <p className="font-medium text-white">{config.limits.messageCreditsPerMonth.toLocaleString()}/month</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Storage Limit</p>
               <p className="font-medium text-white">
-                {config.limits.storageLimitMB >= 1
-                  ? `${config.limits.storageLimitMB} MB`
-                  : `${config.limits.storageLimitMB * 1024} KB`}
+                {config.limits.messageCreditsPerMonth.toLocaleString()}
+                {config.addOns.some(a => a.type === 'extra_messages') && (
+                  <span className="text-green-400">
+                    {' '}+ {config.addOns.filter(a => a.type === 'extra_messages').reduce((sum, a) => sum + (a.value || 0), 0).toLocaleString()}
+                  </span>
+                )}
+                /month
               </p>
             </div>
           </div>
+          {config.addOns.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-700">
+              <p className="text-sm text-slate-400 mb-2">Active Add-Ons:</p>
+              <div className="flex flex-wrap gap-2">
+                {config.addOns.map(addOn => (
+                  <span key={addOn.id} className="px-3 py-1 bg-orange-500/20 text-orange-300 rounded-full text-sm">
+                    {addOn.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>
