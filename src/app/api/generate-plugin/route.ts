@@ -148,7 +148,11 @@ class Strikebot {
             'theme' => $this->config['theme'] ?? array(),
             'widget' => $this->config['widget'] ?? array(),
             'limits' => $this->config['limits'] ?? array(),
-            'features' => $this->config['features'] ?? array()
+            'features' => $this->config['features'] ?? array(),
+            'tier' => $this->config['tier'] ?? 'starter',
+            'billingPeriod' => $this->config['billingPeriod'] ?? 'monthly',
+            'addOns' => $this->config['addOns'] ?? array(),
+            'instructions' => ''
         );
 
         add_option('strikebot_settings', $defaults);
@@ -229,6 +233,12 @@ class Strikebot {
         $usage = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table WHERE month = %s", $month));
         $settings = get_option('strikebot_settings');
         $limit = $settings['limits']['messageCreditsPerMonth'] ?? 50;
+        $addOns = $settings['addOns'] ?? array();
+        foreach ($addOns as $addOn) {
+            if (is_array($addOn) && $addOn['type'] === 'extra_messages' && isset($addOn['value'])) {
+                $limit += $addOn['value'];
+            }
+        }
         return !$usage || $usage->message_count < $limit;
     }
 
@@ -293,7 +303,12 @@ class Strikebot {
     private function build_system_prompt($context) {
         $settings = get_option('strikebot_settings');
         $name = $settings['name'] ?? 'Assistant';
-        $prompt = "You are $name, a helpful AI assistant. Answer questions based on the following knowledge base:\\n" . $context . "\\n\\nIf you don't know the answer based on the knowledge base, say so politely.";
+        $instructions = $settings['instructions'] ?? '';
+        $prompt = "You are $name, a helpful AI assistant.";
+        if (!empty($instructions)) {
+            $prompt .= "\\n\\n" . $instructions;
+        }
+        $prompt .= "\\n\\nAnswer questions based on the following knowledge base:\\n" . $context . "\\n\\nIf you don't know the answer based on the knowledge base, say so politely.";
         return $prompt;
     }
 
@@ -330,6 +345,8 @@ class Strikebot {
         if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
         $settings = get_option('strikebot_settings');
         if (isset($_POST['name'])) { $settings['name'] = sanitize_text_field($_POST['name']); }
+        if (isset($_POST['instructions'])) { $settings['instructions'] = sanitize_textarea_field($_POST['instructions']); }
+        if (isset($_POST['removeBranding'])) { $settings['removeBranding'] = $_POST['removeBranding'] === 'true' || $_POST['removeBranding'] === '1'; }
         if (isset($_POST['theme'])) { $settings['theme'] = array_map('sanitize_text_field', $_POST['theme']); }
         if (isset($_POST['widget'])) { $settings['widget'] = array_map('sanitize_text_field', $_POST['widget']); }
         if (isset($_POST['api_key'])) { update_option('strikebot_api_key', sanitize_text_field($_POST['api_key'])); }
@@ -388,7 +405,7 @@ class Strikebot {
         if (!empty($metadata_to_store) && !(substr($metadata_to_store, 0, 1) === '{' && substr($metadata_to_store, -1) === '}')) {
             $metadata_to_store = sanitize_text_field($metadata_to_store);
         }
-        $insert_result = $wpdb->insert($table, array('type' => $type, 'name' => sanitize_text_field($_POST['name'] ?? ''), 'content' => $new_content, 'metadata' => $metadata_to_store));
+        $insert_result = $wpdb->insert($table, array('type' => $type, 'name' => sanitize_text_field($_POST['name'] ?? ''), 'content' => $new_content, 'metadata' => $metadata_to_store, 'created_at' => current_time('mysql')));
         if ($insert_result === false) { wp_send_json_error(array('message' => 'Failed to save knowledge: ' . $wpdb->last_error)); }
         wp_send_json_success(array('message' => 'Knowledge added', 'id' => $wpdb->insert_id));
     }

@@ -144,6 +144,60 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
         </div>
     </div>
 
+    <!-- Chatbot Configuration -->
+    <div class="strikebot-card" style="margin-top: 20px;">
+        <h2>Chatbot Configuration</h2>
+        <form id="strikebot-config-form">
+            <div class="strikebot-form-group">
+                <label for="chatbot-instructions">Instructions</label>
+                <textarea
+                    id="chatbot-instructions"
+                    name="instructions"
+                    rows="6"
+                    placeholder="Add custom instructions for how your chatbot should behave, respond, or sound. For example: 'Always be professional and concise. Use a friendly tone. Focus on helping customers find product information.'"
+                    style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px;"
+                ><?php echo esc_textarea($settings['instructions'] ?? ''); ?></textarea>
+                <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
+                    Customize how your chatbot should behave, what tone it should use, and any specific guidelines it should follow.
+                </p>
+            </div>
+
+            <?php
+            // Check if remove branding add-on is active
+            $hasRemoveBrandingAddon = false;
+            if (is_array($addOns)) {
+                foreach ($addOns as $addOn) {
+                    if (is_array($addOn) && isset($addOn['type']) && $addOn['type'] === 'remove_branding') {
+                        $hasRemoveBrandingAddon = true;
+                        break;
+                    }
+                }
+            }
+            ?>
+
+            <?php if ($hasRemoveBrandingAddon): ?>
+            <div class="strikebot-form-group">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input
+                        type="checkbox"
+                        id="remove-branding"
+                        name="removeBranding"
+                        <?php checked($settings['removeBranding'] ?? false); ?>
+                        style="width: 18px; height: 18px; cursor: pointer;"
+                    />
+                    <span style="font-weight: 500;">Remove "Powered by Strikebot" branding</span>
+                </label>
+                <p style="margin-top: 0.5rem; margin-left: 1.625rem; font-size: 0.875rem; color: #6b7280;">
+                    Hide the "Powered by Strikebot" text from your chatbot widget.
+                </p>
+            </div>
+            <?php endif; ?>
+
+            <button type="submit" class="button button-primary">Save Configuration</button>
+            <span id="config-save-status" style="margin-left: 1rem; color: #10b981; display: none;">✓ Saved</span>
+        </form>
+    </div>
+
     <!-- Quick Actions -->
     <div class="strikebot-quick-actions">
         <h2>Quick Actions</h2>

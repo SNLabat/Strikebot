@@ -772,4 +772,34 @@
         });
     });
 
+    // Chatbot configuration form
+    $('#strikebot-config-form').on('submit', function(e) {
+        e.preventDefault();
+
+        const instructions = $('#chatbot-instructions').val();
+        const removeBranding = $('#remove-branding').is(':checked');
+        const $status = $('#config-save-status');
+
+        $.ajax({
+            url: strikebotAdmin.ajaxUrl,
+            method: 'POST',
+            data: {
+                action: 'strikebot_save_settings',
+                nonce: strikebotAdmin.nonce,
+                instructions: instructions,
+                removeBranding: removeBranding ? 'true' : 'false'
+            },
+            success: function(response) {
+                if (response.success) {
+                    $status.fadeIn().delay(2000).fadeOut();
+                } else {
+                    alert(response.data.message || 'Error saving configuration');
+                }
+            },
+            error: function() {
+                alert('Error saving configuration');
+            }
+        });
+    });
+
 })(jQuery);
