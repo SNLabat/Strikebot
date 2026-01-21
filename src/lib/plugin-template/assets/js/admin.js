@@ -4,6 +4,8 @@
 (function($) {
     'use strict';
 
+    console.log('Strikebot Admin JS loaded');
+
     // Theme Toggle
     $('#strikebot-theme-toggle').on('click', function() {
         const $toggle = $(this);
@@ -773,20 +775,30 @@
     });
 
     // Debug: Log loaded configuration values on page load
-    if ($('#strikebot-config-form').length > 0) {
-        const loadedInstructions = $('#chatbot-instructions').val();
-        const loadedRemoveBranding = $('#remove-branding').is(':checked');
-        const loadedLength = $('#chatbot-instructions').data('loaded-length');
-        console.log('Dashboard loaded with configuration:', {
-            instructions: loadedInstructions,
-            instructionsLength: loadedInstructions.length,
-            instructionsLengthFromServer: loadedLength,
-            removeBranding: loadedRemoveBranding
-        });
-    }
+    $(document).ready(function() {
+        console.log('Document ready, checking for config form...');
+
+        if ($('#strikebot-config-form').length > 0) {
+            console.log('Config form found!');
+            const loadedInstructions = $('#chatbot-instructions').val();
+            const loadedRemoveBranding = $('#remove-branding').is(':checked');
+            const loadedLength = $('#chatbot-instructions').data('loaded-length');
+            console.log('Dashboard loaded with configuration:', {
+                instructions: loadedInstructions,
+                instructionsLength: loadedInstructions.length,
+                instructionsLengthFromServer: loadedLength,
+                removeBranding: loadedRemoveBranding
+            });
+        } else {
+            console.log('Config form NOT found on this page');
+        }
+    });
 
     // Chatbot configuration form
-    $('#strikebot-config-form').on('submit', function(e) {
+    $(document).ready(function() {
+        console.log('Attaching configuration form handler...');
+        $('#strikebot-config-form').on('submit', function(e) {
+            console.log('Form submitted!');
         e.preventDefault();
         e.stopPropagation();
 
@@ -843,6 +855,7 @@
         });
 
         return false;
+        });
     });
 
 })(jQuery);
