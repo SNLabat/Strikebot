@@ -159,17 +159,15 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
     <!-- Chatbot Configuration -->
     <div class="strikebot-card" style="margin-top: 20px;">
         <h2>Chatbot Configuration</h2>
-        <!-- Debug: instructions length = <?php echo strlen($settings['instructions'] ?? ''); ?>, removeBranding = <?php echo ($settings['removeBranding'] ?? false) ? 'true' : 'false'; ?> -->
-        <form id="strikebot-config-form" method="post" action="#" novalidate>
+        
+        <div id="strikebot-chatbot-config" class="strikebot-chatbot-config">
             <div class="strikebot-form-group">
                 <label for="chatbot-instructions">Instructions</label>
                 <textarea
                     id="chatbot-instructions"
-                    name="instructions"
                     rows="6"
                     placeholder="Add custom instructions for how your chatbot should behave, respond, or sound. For example: 'Always be professional and concise. Use a friendly tone. Focus on helping customers find product information.'"
-                    style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px;"
-                    data-loaded-length="<?php echo strlen($settings['instructions'] ?? ''); ?>"
+                    style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px; box-sizing: border-box;"
                 ><?php echo esc_textarea($settings['instructions'] ?? ''); ?></textarea>
                 <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
                     Customize how your chatbot should behave, what tone it should use, and any specific guidelines it should follow.
@@ -191,16 +189,14 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
 
             <?php if ($hasRemoveBrandingAddon): ?>
             <div class="strikebot-form-group">
-                <label for="remove-branding-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <label for="remove-branding" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
                     <input
                         type="checkbox"
                         id="remove-branding"
-                        name="removeBranding"
-                        value="1"
                         <?php checked($settings['removeBranding'] ?? false); ?>
                         style="width: 18px; height: 18px; cursor: pointer;"
                     />
-                    <span id="remove-branding-label" style="font-weight: 500;">Remove "Powered by Strikebot" branding</span>
+                    <span style="font-weight: 500;">Remove "Powered by Strikebot" branding</span>
                 </label>
                 <p style="margin-top: 0.5rem; margin-left: 1.625rem; font-size: 0.875rem; color: #6b7280;">
                     Hide the "Powered by Strikebot" text from your chatbot widget.
@@ -208,8 +204,11 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
             </div>
             <?php endif; ?>
 
-            <button type="submit" class="button button-primary" id="config-save-btn" name="save_config">Save Configuration</button>
-        </form>
+            <div class="strikebot-form-actions">
+                <button type="button" class="button button-primary" id="strikebot-save-config-btn">Save Configuration</button>
+                <span id="strikebot-config-save-status" style="margin-left: 10px; font-size: 13px;"></span>
+            </div>
+        </div>
     </div>
 
     <!-- Quick Actions -->

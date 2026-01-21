@@ -536,34 +536,35 @@ class Strikebot {
         
         // Handle instructions (for chatbot configuration)
         if (isset($_POST['instructions'])) {
+            // Always update instructions if provided (even if empty)
             $settings['instructions'] = sanitize_textarea_field($_POST['instructions']);
         }
         
         // Handle removeBranding checkbox (for chatbot configuration)
-        if (isset($_POST['removeBranding'])) {
-            $settings['removeBranding'] = ($_POST['removeBranding'] === 'true' || $_POST['removeBranding'] === '1');
-        } else {
-            // If checkbox is not checked, it won't be sent, so set it to false
-            // Only do this if we're saving from the config form (indicated by instructions being set)
-            if (isset($_POST['instructions'])) {
+        // If instructions are being saved, we also need to handle removeBranding
+        if (isset($_POST['instructions'])) {
+            if (isset($_POST['removeBranding']) && ($_POST['removeBranding'] === 'true' || $_POST['removeBranding'] === '1')) {
+                $settings['removeBranding'] = true;
+            } else {
+                // Checkbox not checked or not sent - set to false
                 $settings['removeBranding'] = false;
             }
         }
 
         $update_result = update_option('strikebot_settings', $settings);
         
-        // Verify the save worked by reading back the values
-        $saved_settings = get_option('strikebot_settings');
-        $debug_info = array();
+        // Return success response
+        $response_data = array('message' => 'Settings saved successfully');
+        
+        // If saving chatbot config, verify and include debug info
         if (isset($_POST['instructions'])) {
-            $debug_info['saved_instructions_length'] = strlen($saved_settings['instructions'] ?? '');
-            $debug_info['verified_instructions_length'] = strlen($saved_settings['instructions'] ?? '');
-            $debug_info['saved_removeBranding'] = ($saved_settings['removeBranding'] ?? false) ? 'true' : 'false';
-            $debug_info['verified_removeBranding'] = ($saved_settings['removeBranding'] ?? false) ? 'true' : 'false';
-            $debug_info['update_result'] = $update_result;
+            $saved_settings = get_option('strikebot_settings');
+            $response_data['instructions_saved'] = strlen($saved_settings['instructions'] ?? '') > 0;
+            $response_data['removeBranding_saved'] = (bool)($saved_settings['removeBranding'] ?? false);
+            $response_data['instructions_length'] = strlen($saved_settings['instructions'] ?? '');
         }
 
-        wp_send_json_success(array('message' => 'Settings saved', 'debug' => $debug_info));
+        wp_send_json_success($response_data);
     }
 
     public function save_admin_theme() {
