@@ -776,9 +776,10 @@
 
     // Debug: Log loaded configuration values on page load
     $(document).ready(function() {
-        if ($('#strikebot-chatbot-config').length > 0) {
-            const loadedInstructions = $('#chatbot-instructions').val();
-            const loadedRemoveBranding = $('#remove-branding').is(':checked');
+        if ($('#chatbot-instructions-field').length > 0) {
+            const loadedInstructions = $('#chatbot-instructions-field').val();
+            const $removeBranding = $('#remove-branding-field');
+            const loadedRemoveBranding = $removeBranding.length > 0 ? $removeBranding.is(':checked') : false;
             console.log('Chatbot configuration loaded:', {
                 instructionsLength: loadedInstructions ? loadedInstructions.length : 0,
                 removeBranding: loadedRemoveBranding
@@ -788,90 +789,139 @@
 
     // Chatbot Configuration Save Handler
     $(document).ready(function() {
-        $('#strikebot-save-config-btn').on('click', function(e) {
+        $('#save-chatbot-config-btn').on('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
+            e.stopImmediatePropagation();
 
             const $btn = $(this);
-            const $status = $('#strikebot-config-save-status');
+            const $status = $('#chatbot-config-status');
             const originalText = $btn.text();
 
-            // Get form values
-            const instructions = $('#chatbot-instructions').val() || '';
-            const $removeBrandingCheckbox = $('#remove-branding');
-            const removeBranding = $removeBrandingCheckbox.length > 0 && $removeBrandingCheckbox.is(':checked');
+            // Get values from form fields
+            const instructions = $('#chatbot-instructions-field').val() || '';
+            const $removeBrandingCheckbox = $('#remove-branding-field');
+            const removeBranding = $removeBrandingCheckbox.length > 0 ? $removeBrandingCheckbox.is(':checked') : false;
 
-            console.log('Saving chatbot configuration:', {
-                instructionsLength: instructions.length,
-                removeBranding: removeBranding,
-                ajaxUrl: strikebotAdmin.ajaxUrl,
-                hasNonce: !!strikebotAdmin.nonce
-            });
+            console.log('=== Saving Chatbot Configuration ===');
+            console.log('Instructions length:', instructions.length);
+            console.log('Remove branding:', removeBranding);
+            console.log('AJAX URL:', strikebotAdmin ? strikebotAdmin.ajaxUrl : 'NOT FOUND');
+            console.log('Nonce:', strikebotAdmin && strikebotAdmin.nonce ? 'PRESENT' : 'MISSING');
 
             // Validate AJAX configuration
-            if (!strikebotAdmin || !strikebotAdmin.ajaxUrl || !strikebotAdmin.nonce) {
-                $status.html('<span style="color: red;">Error: AJAX configuration missing. Please refresh the page.</span>');
-                console.error('Missing AJAX configuration:', strikebotAdmin);
+            if (!window.strikebotAdmin) {
+                $status.html('<span style="color: #dc2626;">Error: JavaScript configuration not loaded. Please refresh the page.</span>');
+                console.error('strikebotAdmin object not found');
                 return false;
             }
 
-            // Update UI
+            if (!strikebotAdmin.ajaxUrl || !strikebotAdmin.nonce) {
+                $status.html('<span style="color: #dc2626;">Error: AJAX configuration missing. Please refresh the page.</span>');
+                console.error('Missing AJAX configuration:', {
+                    ajaxUrl: strikebotAdmin.ajaxUrl,
+                    nonce: strikebotAdmin.nonce
+                });
+                return false;
+            }
+
+            // Update UI - show saving state
             $btn.prop('disabled', true).text('Saving...');
-            $status.html('<span style="color: #666;">Saving...</span>');
+            $status.html('<span style="color: #059669;">Saving configuration...</span>');
+
+            // Prepare data
+            const ajaxData = {
+                action: 'strikebot_save_chatbot_config',
+                nonce: strikebotAdmin.nonce,
+                instructions: instructions,
+                removeBranding: removeBranding ? '1' : '0'
+            };
+
+            console.log('Sending AJAX request with data:', ajaxData);
 
             // Make AJAX request
             $.ajax({
                 url: strikebotAdmin.ajaxUrl,
-                method: 'POST',
-                data: {
-                    action: 'strikebot_save_settings',
-                    nonce: strikebotAdmin.nonce,
-                    instructions: instructions,
-                    removeBranding: removeBranding ? 'true' : 'false'
-                },
-                timeout: 10000,
+                type: 'POST',
+                data: ajaxData,
+                dataType: 'json',
+                timeout: 15000,
                 success: function(response) {
-                    console.log('Save response:', response);
+                    console.log('=== AJAX Response ===');
+                    console.log('Full response:', response);
+                    console.log('Response type:', typeof response);
+                    console.log('Response success:', response ? response.success : 'N/A');
                     
-                    if (response && response.success) {
-                        $status.html('<span style="color: green;">✓ Configuration saved successfully!</span>');
+                    // Handle string responses (WordPress sometimes returns strings)
+                    if (typeof response === 'string') {
+                        try {
+                            response = JSON.parse(response);
+                        } catch (e) {
+                            console.error('Failed to parse response as JSON:', e);
+                            $status.html('<span style="color: #dc2626;">✗ Invalid response from server. Please try again.</span>');
+                            $btn.prop('disabled', false).text(originalText);
+                            return;
+                        }
+                    }
+                    
+                    if (response && response.success === true) {
+                        const successMsg = response.data && response.data.message 
+                            ? response.data.message 
+                            : 'Configuration saved successfully!';
+                        $status.html('<span style="color: #059669;">✓ ' + successMsg + '</span>');
                         
-                        // Clear success message after 3 seconds
+                        // Auto-hide success message after 4 seconds
                         setTimeout(function() {
-                            $status.fadeOut(400, function() {
-                                $status.html('').show();
+                            $status.fadeOut(500, function() {
+                                $(this).html('').show();
                             });
-                        }, 3000);
+                        }, 4000);
+                        
+                        console.log('✓ Configuration saved successfully');
                     } else {
                         const errorMsg = response && response.data && response.data.message 
                             ? response.data.message 
-                            : 'Error saving configuration';
-                        $status.html('<span style="color: red;">✗ ' + errorMsg + '</span>');
+                            : 'Failed to save configuration. Please try again.';
+                        $status.html('<span style="color: #dc2626;">✗ ' + errorMsg + '</span>');
                         console.error('Save failed:', response);
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('AJAX error saving configuration:', {
-                        status: status,
-                        error: error,
-                        statusCode: xhr.status,
-                        responseText: xhr.responseText
-                    });
+                    console.error('=== AJAX Error ===');
+                    console.error('Status:', status);
+                    console.error('Error:', error);
+                    console.error('Status code:', xhr.status);
+                    console.error('Response text:', xhr.responseText);
                     
                     let errorMsg = 'Error saving configuration';
+                    
                     if (status === 'timeout') {
                         errorMsg = 'Request timed out. Please try again.';
                     } else if (xhr.status === 403) {
-                        errorMsg = 'Permission denied. Please refresh the page.';
+                        errorMsg = 'Permission denied. Please refresh the page and try again.';
+                    } else if (xhr.status === 404) {
+                        errorMsg = 'Save endpoint not found. Please refresh the page.';
+                    } else if (xhr.status === 500) {
+                        errorMsg = 'Server error occurred. Please try again later.';
                     } else if (xhr.status === 0) {
                         errorMsg = 'Network error. Please check your connection.';
+                    } else if (xhr.responseText) {
+                        try {
+                            const errorResponse = JSON.parse(xhr.responseText);
+                            if (errorResponse.data && errorResponse.data.message) {
+                                errorMsg = errorResponse.data.message;
+                            }
+                        } catch (e) {
+                            // Ignore parse errors
+                        }
                     }
                     
-                    $status.html('<span style="color: red;">✗ ' + errorMsg + '</span>');
+                    $status.html('<span style="color: #dc2626;">✗ ' + errorMsg + '</span>');
                 },
                 complete: function() {
-                    // Re-enable button
+                    // Always re-enable button
                     $btn.prop('disabled', false).text(originalText);
+                    console.log('=== Request Complete ===');
                 }
             });
 

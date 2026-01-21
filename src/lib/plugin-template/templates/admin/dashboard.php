@@ -159,55 +159,54 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
     <!-- Chatbot Configuration -->
     <div class="strikebot-card" style="margin-top: 20px;">
         <h2>Chatbot Configuration</h2>
+        <p class="description">Customize how your chatbot behaves and responds to users.</p>
         
-        <div id="strikebot-chatbot-config" class="strikebot-chatbot-config">
-            <div class="strikebot-form-group">
-                <label for="chatbot-instructions">Instructions</label>
-                <textarea
-                    id="chatbot-instructions"
-                    rows="6"
-                    placeholder="Add custom instructions for how your chatbot should behave, respond, or sound. For example: 'Always be professional and concise. Use a friendly tone. Focus on helping customers find product information.'"
-                    style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-family: inherit; font-size: 14px; box-sizing: border-box;"
-                ><?php echo esc_textarea($settings['instructions'] ?? ''); ?></textarea>
-                <p style="margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280;">
-                    Customize how your chatbot should behave, what tone it should use, and any specific guidelines it should follow.
-                </p>
-            </div>
+        <div class="strikebot-form-group" style="margin-top: 20px;">
+            <label for="chatbot-instructions-field" style="display: block; font-weight: 600; margin-bottom: 8px;">Instructions</label>
+            <textarea
+                id="chatbot-instructions-field"
+                rows="8"
+                placeholder="Add custom instructions for how your chatbot should behave, respond, or sound.&#10;&#10;Examples:&#10;- Always be professional and concise&#10;- Use a friendly, helpful tone&#10;- Focus on helping customers find product information&#10;- If you don't know something, politely say so"
+                style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 14px; line-height: 1.5; box-sizing: border-box; resize: vertical;"
+            ><?php echo esc_textarea($settings['instructions'] ?? ''); ?></textarea>
+            <p style="margin-top: 8px; font-size: 13px; color: #6b7280;">
+                These instructions guide how your chatbot responds. Be specific about tone, style, and behavior preferences.
+            </p>
+        </div>
 
-            <?php
-            // Check if remove branding add-on is active
-            $hasRemoveBrandingAddon = false;
-            if (is_array($addOns)) {
-                foreach ($addOns as $addOn) {
-                    if (is_array($addOn) && isset($addOn['type']) && $addOn['type'] === 'remove_branding') {
-                        $hasRemoveBrandingAddon = true;
-                        break;
-                    }
+        <?php
+        // Check if remove branding add-on is active
+        $hasRemoveBrandingAddon = false;
+        if (is_array($addOns)) {
+            foreach ($addOns as $addOn) {
+                if (is_array($addOn) && isset($addOn['type']) && $addOn['type'] === 'remove_branding') {
+                    $hasRemoveBrandingAddon = true;
+                    break;
                 }
             }
-            ?>
+        }
+        ?>
 
-            <?php if ($hasRemoveBrandingAddon): ?>
-            <div class="strikebot-form-group">
-                <label for="remove-branding" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                    <input
-                        type="checkbox"
-                        id="remove-branding"
-                        <?php checked($settings['removeBranding'] ?? false); ?>
-                        style="width: 18px; height: 18px; cursor: pointer;"
-                    />
-                    <span style="font-weight: 500;">Remove "Powered by Strikebot" branding</span>
-                </label>
-                <p style="margin-top: 0.5rem; margin-left: 1.625rem; font-size: 0.875rem; color: #6b7280;">
-                    Hide the "Powered by Strikebot" text from your chatbot widget.
-                </p>
-            </div>
-            <?php endif; ?>
+        <?php if ($hasRemoveBrandingAddon): ?>
+        <div class="strikebot-form-group" style="margin-top: 20px;">
+            <label for="remove-branding-field" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+                <input
+                    type="checkbox"
+                    id="remove-branding-field"
+                    <?php checked($settings['removeBranding'] ?? false); ?>
+                    style="width: 18px; height: 18px; cursor: pointer;"
+                />
+                <span>Remove "Powered by Strikebot" branding</span>
+            </label>
+            <p style="margin-top: 8px; margin-left: 26px; font-size: 13px; color: #6b7280;">
+                Hide the "Powered by Strikebot" text from your chatbot widget.
+            </p>
+        </div>
+        <?php endif; ?>
 
-            <div class="strikebot-form-actions">
-                <button type="button" class="button button-primary" id="strikebot-save-config-btn">Save Configuration</button>
-                <span id="strikebot-config-save-status" style="margin-left: 10px; font-size: 13px;"></span>
-            </div>
+        <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <button type="button" class="button button-primary button-large" id="save-chatbot-config-btn">Save Configuration</button>
+            <span id="chatbot-config-status" style="margin-left: 12px; font-size: 14px; font-weight: 500;"></span>
         </div>
     </div>
 

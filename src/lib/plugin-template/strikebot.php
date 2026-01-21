@@ -52,6 +52,7 @@ class Strikebot {
         add_action('wp_ajax_strikebot_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_nopriv_strikebot_chat', array($this, 'handle_chat'));
         add_action('wp_ajax_strikebot_save_settings', array($this, 'save_settings'));
+        add_action('wp_ajax_strikebot_save_chatbot_config', array($this, 'save_chatbot_config'));
         add_action('wp_ajax_strikebot_save_admin_theme', array($this, 'save_admin_theme'));
         add_action('wp_ajax_strikebot_save_knowledge', array($this, 'save_knowledge'));
         add_action('wp_ajax_strikebot_delete_knowledge', array($this, 'delete_knowledge'));
@@ -583,6 +584,46 @@ class Strikebot {
         update_option('strikebot_admin_theme', $theme);
 
         wp_send_json_success(array('message' => 'Theme saved', 'theme' => $theme));
+    }
+
+    public function save_chatbot_config() {
+        check_ajax_referer('strikebot_admin', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(array('message' => 'Unauthorized'));
+        }
+
+        $settings = get_option('strikebot_settings', array());
+        
+        // Save instructions
+        if (isset($_POST['instructions'])) {
+            $instructions = sanitize_textarea_field($_POST['instructions']);
+            $settings['instructions'] = $instructions;
+        } else {
+            $settings['instructions'] = '';
+        }
+        
+        // Save removeBranding checkbox
+        if (isset($_POST['removeBranding']) && $_POST['removeBranding'] === '1') {
+            $settings['removeBranding'] = true;
+        } else {
+            $settings['removeBranding'] = false;
+        }
+        
+        // Save to database
+        $result = update_option('strikebot_settings', $settings);
+        
+        // Verify save
+        $saved_settings = get_option('strikebot_settings', array());
+        $instructions_saved = isset($saved_settings['instructions']) ? $saved_settings['instructions'] : '';
+        $removeBranding_saved = isset($saved_settings['removeBranding']) ? (bool)$saved_settings['removeBranding'] : false;
+        
+        wp_send_json_success(array(
+            'message' => 'Chatbot configuration saved successfully',
+            'instructions_length' => strlen($instructions_saved),
+            'removeBranding' => $removeBranding_saved,
+            'saved' => true
+        ));
     }
 
     public function save_knowledge() {
