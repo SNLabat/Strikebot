@@ -779,13 +779,11 @@
 
         const instructions = $('#chatbot-instructions').val();
         const removeBranding = $('#remove-branding').is(':checked');
-        const $status = $('#config-save-status');
         const $btn = $('#config-save-btn');
         const originalText = $btn.text();
 
         // Disable button and show loading state
         $btn.prop('disabled', true).text('Saving...');
-        $status.hide();
 
         $.ajax({
             url: strikebotAdmin.ajaxUrl,
@@ -798,7 +796,7 @@
             },
             success: function(response) {
                 if (response.success) {
-                    $status.fadeIn().delay(2000).fadeOut();
+                    alert('Configuration saved successfully!');
                 } else {
                     alert(response.data.message || 'Error saving configuration');
                 }
