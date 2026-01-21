@@ -346,6 +346,11 @@ class Strikebot {
         if (!current_user_can('manage_options')) { wp_send_json_error(array('message' => 'Unauthorized')); }
         $settings = get_option('strikebot_settings');
         if (!is_array($settings)) { $settings = array(); }
+
+        // Ensure critical fields exist
+        if (!isset($settings['instructions'])) { $settings['instructions'] = ''; }
+        if (!isset($settings['removeBranding'])) { $settings['removeBranding'] = false; }
+
         if (isset($_POST['name'])) { $settings['name'] = sanitize_text_field($_POST['name']); }
         if (isset($_POST['instructions'])) {
             $settings['instructions'] = sanitize_textarea_field($_POST['instructions']);
@@ -356,9 +361,25 @@ class Strikebot {
         if (isset($_POST['theme'])) { $settings['theme'] = array_map('sanitize_text_field', $_POST['theme']); }
         if (isset($_POST['widget'])) { $settings['widget'] = array_map('sanitize_text_field', $_POST['widget']); }
         if (isset($_POST['api_key'])) { update_option('strikebot_api_key', sanitize_text_field($_POST['api_key'])); }
+
         $result = update_option('strikebot_settings', $settings);
-        error_log('Strikebot: Settings saved. Result: ' . ($result ? 'success' : 'no change') . ', instructions: ' . (isset($settings['instructions']) ? strlen($settings['instructions']) : '0') . ' chars, removeBranding: ' . ($settings['removeBranding'] ?? 'not set'));
-        wp_send_json_success(array('message' => 'Settings saved', 'debug' => array('instructions_length' => isset($settings['instructions']) ? strlen($settings['instructions']) : 0, 'removeBranding' => $settings['removeBranding'] ?? false)));
+        error_log('Strikebot: Settings saved. Result: ' . ($result ? 'success' : 'no change') . ', instructions: ' . strlen($settings['instructions']) . ' chars, removeBranding: ' . ($settings['removeBranding'] ? 'true' : 'false'));
+
+        // Verify the save by reading it back
+        $verify = get_option('strikebot_settings');
+        $verifyInstructions = $verify['instructions'] ?? '';
+        $verifyBranding = $verify['removeBranding'] ?? false;
+
+        wp_send_json_success(array(
+            'message' => 'Settings saved',
+            'debug' => array(
+                'saved_instructions_length' => strlen($settings['instructions']),
+                'saved_removeBranding' => $settings['removeBranding'],
+                'verified_instructions_length' => strlen($verifyInstructions),
+                'verified_removeBranding' => $verifyBranding,
+                'update_result' => $result
+            )
+        ));
     }
 
     public function save_admin_theme() {

@@ -772,6 +772,19 @@
         });
     });
 
+    // Debug: Log loaded configuration values on page load
+    if ($('#strikebot-config-form').length > 0) {
+        const loadedInstructions = $('#chatbot-instructions').val();
+        const loadedRemoveBranding = $('#remove-branding').is(':checked');
+        const loadedLength = $('#chatbot-instructions').data('loaded-length');
+        console.log('Dashboard loaded with configuration:', {
+            instructions: loadedInstructions,
+            instructionsLength: loadedInstructions.length,
+            instructionsLengthFromServer: loadedLength,
+            removeBranding: loadedRemoveBranding
+        });
+    }
+
     // Chatbot configuration form
     $('#strikebot-config-form').on('submit', function(e) {
         e.preventDefault();
@@ -802,8 +815,19 @@
             },
             success: function(response) {
                 console.log('Save response:', response);
-                if (response.success) {
-                    alert('Configuration saved successfully!\n\nInstructions: ' + (response.data.debug ? response.data.debug.instructions_length : '?') + ' chars\nRemove Branding: ' + (response.data.debug ? response.data.debug.removeBranding : '?'));
+                if (response.success && response.data.debug) {
+                    const debug = response.data.debug;
+                    let message = 'Configuration saved successfully!\n\n';
+                    message += '=== SAVED VALUES ===\n';
+                    message += 'Instructions: ' + debug.saved_instructions_length + ' chars\n';
+                    message += 'Remove Branding: ' + debug.saved_removeBranding + '\n\n';
+                    message += '=== VERIFIED FROM DATABASE ===\n';
+                    message += 'Instructions: ' + debug.verified_instructions_length + ' chars\n';
+                    message += 'Remove Branding: ' + debug.verified_removeBranding + '\n\n';
+                    message += 'Update Result: ' + (debug.update_result ? 'Changed' : 'No change (same value)');
+                    alert(message);
+                } else if (response.success) {
+                    alert('Configuration saved successfully!');
                 } else {
                     alert(response.data.message || 'Error saving configuration');
                 }
