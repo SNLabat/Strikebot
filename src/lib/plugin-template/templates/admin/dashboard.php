@@ -157,16 +157,34 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
     </div>
 
     <!-- Chatbot Configuration -->
+    <?php
+    // Check if remove branding add-on is active
+    $hasRemoveBrandingAddon = false;
+    if (is_array($addOns)) {
+        foreach ($addOns as $addOn) {
+            if (is_array($addOn) && isset($addOn['type']) && $addOn['type'] === 'remove_branding') {
+                $hasRemoveBrandingAddon = true;
+                break;
+            }
+        }
+    }
+    ?>
     <div class="strikebot-card" style="margin-top: 20px;">
         <h2>Chatbot Configuration</h2>
         <p class="description">Customize how your chatbot behaves and responds to users.</p>
         
-        <div class="strikebot-form-group" style="margin-top: 20px;">
-            <label for="chatbot-instructions-field" style="display: block; font-weight: 600; margin-bottom: 8px;">Instructions</label>
+        <div style="margin-top: 20px;">
+            <label style="display: block; font-weight: 600; margin-bottom: 8px;">Instructions</label>
             <textarea
-                id="chatbot-instructions-field"
+                id="strikebot_instructions_textarea"
                 rows="8"
-                placeholder="Add custom instructions for how your chatbot should behave, respond, or sound.&#10;&#10;Examples:&#10;- Always be professional and concise&#10;- Use a friendly, helpful tone&#10;- Focus on helping customers find product information&#10;- If you don't know something, politely say so"
+                placeholder="Add custom instructions for how your chatbot should behave, respond, or sound.
+
+Examples:
+- Always be professional and concise
+- Use a friendly, helpful tone
+- Focus on helping customers find product information
+- If you don't know something, politely say so"
                 style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; font-size: 14px; line-height: 1.5; box-sizing: border-box; resize: vertical;"
             ><?php echo esc_textarea($settings['instructions'] ?? ''); ?></textarea>
             <p style="margin-top: 8px; font-size: 13px; color: #6b7280;">
@@ -174,25 +192,12 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
             </p>
         </div>
 
-        <?php
-        // Check if remove branding add-on is active
-        $hasRemoveBrandingAddon = false;
-        if (is_array($addOns)) {
-            foreach ($addOns as $addOn) {
-                if (is_array($addOn) && isset($addOn['type']) && $addOn['type'] === 'remove_branding') {
-                    $hasRemoveBrandingAddon = true;
-                    break;
-                }
-            }
-        }
-        ?>
-
         <?php if ($hasRemoveBrandingAddon): ?>
-        <div class="strikebot-form-group" style="margin-top: 20px;">
-            <label for="remove-branding-field" style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
+        <div style="margin-top: 20px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600;">
                 <input
                     type="checkbox"
-                    id="remove-branding-field"
+                    id="strikebot_remove_branding_checkbox"
                     <?php checked($settings['removeBranding'] ?? false); ?>
                     style="width: 18px; height: 18px; cursor: pointer;"
                 />
@@ -205,10 +210,81 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
         <?php endif; ?>
 
         <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-            <button type="button" class="button button-primary button-large" id="save-chatbot-config-btn">Save Configuration</button>
-            <span id="chatbot-config-status" style="margin-left: 12px; font-size: 14px; font-weight: 500;"></span>
+            <button type="button" class="button button-primary button-large" onclick="strikebotSaveConfig()">Save Configuration</button>
+            <span id="strikebot_config_status" style="margin-left: 12px; font-size: 14px; font-weight: 500;"></span>
         </div>
     </div>
+
+    <script type="text/javascript">
+    function strikebotSaveConfig() {
+        console.log('strikebotSaveConfig called');
+        
+        var statusEl = document.getElementById('strikebot_config_status');
+        var instructionsEl = document.getElementById('strikebot_instructions_textarea');
+        var brandingEl = document.getElementById('strikebot_remove_branding_checkbox');
+        
+        var instructions = instructionsEl ? instructionsEl.value : '';
+        var removeBranding = brandingEl ? brandingEl.checked : false;
+        
+        console.log('Instructions length:', instructions.length);
+        console.log('Remove branding:', removeBranding);
+        
+        statusEl.innerHTML = '<span style="color: #059669;">Saving...</span>';
+        
+        var ajaxUrl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('strikebot_admin'); ?>';
+        
+        console.log('AJAX URL:', ajaxUrl);
+        console.log('Nonce:', nonce);
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', ajaxUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                console.log('Response status:', xhr.status);
+                console.log('Response text:', xhr.responseText);
+                
+                if (xhr.status === 200) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        console.log('Parsed response:', response);
+                        
+                        if (response.success) {
+                            statusEl.innerHTML = '<span style="color: #059669;">✓ Configuration saved!</span>';
+                            setTimeout(function() {
+                                statusEl.innerHTML = '';
+                            }, 4000);
+                        } else {
+                            var errorMsg = response.data && response.data.message ? response.data.message : 'Failed to save';
+                            statusEl.innerHTML = '<span style="color: #dc2626;">✗ ' + errorMsg + '</span>';
+                        }
+                    } catch (e) {
+                        console.error('Parse error:', e);
+                        statusEl.innerHTML = '<span style="color: #dc2626;">✗ Invalid response from server</span>';
+                    }
+                } else {
+                    statusEl.innerHTML = '<span style="color: #dc2626;">✗ Request failed (status ' + xhr.status + ')</span>';
+                }
+            }
+        };
+        
+        xhr.onerror = function() {
+            console.error('XHR error');
+            statusEl.innerHTML = '<span style="color: #dc2626;">✗ Network error</span>';
+        };
+        
+        var data = 'action=strikebot_save_chatbot_config' +
+                   '&nonce=' + encodeURIComponent(nonce) +
+                   '&instructions=' + encodeURIComponent(instructions) +
+                   '&removeBranding=' + (removeBranding ? '1' : '0');
+        
+        console.log('Sending request...');
+        xhr.send(data);
+    }
+    console.log('Strikebot config script loaded');
+    </script>
 
     <!-- Quick Actions -->
     <div class="strikebot-quick-actions">
