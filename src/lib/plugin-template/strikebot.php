@@ -108,6 +108,9 @@ class Strikebot {
         // Set default options
         $defaults = array(
             'name' => $this->config['name'] ?? 'Chatbot',
+            'tier' => $this->config['tier'] ?? 'starter',
+            'billingPeriod' => $this->config['billingPeriod'] ?? 'monthly',
+            'addOns' => $this->config['addOns'] ?? array(),
             'theme' => $this->config['theme'] ?? array(
                 'primaryColor' => '#3B82F6',
                 'secondaryColor' => '#1E40AF',
@@ -122,16 +125,16 @@ class Strikebot {
                 'iconUrl' => ''
             ),
             'limits' => $this->config['limits'] ?? array(
-                'messageCreditsPerMonth' => 50,
-                'storageLimitMB' => 0.4,
-                'aiActionsPerAgent' => 0,
-                'linkTrainingLimit' => 10
+                'messageCreditsPerMonth' => 10000,
+                'storageLimitMB' => 50,
+                'aiActionsPerAgent' => 5,
+                'linkTrainingLimit' => null
             ),
             'features' => $this->config['features'] ?? array(
                 'integrations' => false,
                 'apiAccess' => false,
-                'analytics' => 'none',
-                'autoRetrain' => false,
+                'analytics' => 'basic',
+                'autoRetrain' => true,
                 'modelAccess' => 'limited'
             )
         );
@@ -139,7 +142,7 @@ class Strikebot {
         add_option('strikebot_settings', $defaults);
         add_option('strikebot_api_key', $this->config['apiKey'] ?? '');
         add_option('strikebot_api_endpoint', $this->config['apiEndpoint'] ?? 'https://api.openai.com/v1');
-        add_option('strikebot_model', $this->config['model'] ?? 'gpt-4.1-nano');
+        add_option('strikebot_model', $this->config['model'] ?? 'gpt-4o-mini');
     }
 
     public function deactivate() {
@@ -317,7 +320,15 @@ class Strikebot {
         ));
 
         $settings = get_option('strikebot_settings');
-        $limit = $settings['limits']['messageCreditsPerMonth'] ?? 50;
+        $limit = $settings['limits']['messageCreditsPerMonth'] ?? 10000;
+
+        // Add extra messages from add-ons
+        $addOns = $settings['addOns'] ?? array();
+        foreach ($addOns as $addOn) {
+            if ($addOn['type'] === 'extra_messages' && isset($addOn['value'])) {
+                $limit += $addOn['value'];
+            }
+        }
 
         return !$usage || $usage->message_count < $limit;
     }

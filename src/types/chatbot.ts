@@ -1,9 +1,23 @@
-export type TierName = 'free' | 'hobby' | 'standard' | 'pro';
+export type TierName = 'starter' | 'professional' | 'business' | 'enterprise';
+export type BillingPeriod = 'monthly' | 'annual';
+
+export interface AddOn {
+  id: string;
+  name: string;
+  description: string;
+  price: number; // monthly price
+  type: 'extra_messages' | 'remove_branding';
+  value?: number; // e.g., 2500 for extra messages
+}
 
 export interface TierConfig {
   name: TierName;
   displayName: string;
-  price: number;
+  pricing: {
+    monthly: number;
+    annual: number; // total annual price
+    annualMonthly: number; // monthly price when billed annually
+  };
   features: {
     messageCreditsPerMonth: number;
     storageLimitMB: number;
@@ -16,6 +30,17 @@ export interface TierConfig {
     autoRetrain: boolean;
     inactivityDeletionDays: number | null;
     modelAccess: 'limited' | 'advanced';
+    // New features
+    websiteEmbed: boolean;
+    leadCapture: boolean;
+    emailTranscripts: boolean;
+    conversationHistoryExport: boolean;
+    autoSyncDataSources: boolean;
+    supportLevel: 'none' | 'email' | 'priority-email' | 'dedicated';
+    trainingSessions: number;
+    monthlyStrategyCalls: boolean;
+    quarterlyBusinessReviews: boolean;
+    customDataRetention: boolean;
   };
 }
 
@@ -23,6 +48,8 @@ export interface ChatbotConfig {
   id: string;
   name: string;
   tier: TierName;
+  billingPeriod: BillingPeriod;
+  addOns: AddOn[];
   model: string;
   apiKey: string;
   apiEndpoint: string;
@@ -84,81 +111,64 @@ export interface PluginGeneratorRequest {
 }
 
 export const AVAILABLE_MODELS = [
-  { id: 'gpt-5.1', name: 'GPT-5.1', tier: 'advanced' },
-  { id: 'gpt-5-mini', name: 'GPT-5 Mini', tier: 'advanced' },
-  { id: 'gpt-5-nano', name: 'GPT-5 Nano', tier: 'limited' },
-  { id: 'gpt-4.1', name: 'GPT-4.1', tier: 'advanced' },
-  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', tier: 'limited' },
-  { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', tier: 'limited' },
-  { id: 'o3', name: 'O3', tier: 'advanced' },
-  { id: 'o4-mini', name: 'O4 Mini', tier: 'advanced' },
-  { id: 'gpt-4o', name: 'GPT-4o', tier: 'limited' },
-  { id: 'gpt-4o-realtime-preview', name: 'GPT-4o Realtime Preview', tier: 'advanced' },
+  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', tier: 'starter' },
+  { id: 'gpt-4o', name: 'GPT-4o', tier: 'starter' },
+  { id: 'gpt-5.1', name: 'GPT-5.1', tier: 'professional' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', tier: 'professional' },
+  { id: 'gpt-5-nano', name: 'GPT-5 Nano', tier: 'professional' },
+  { id: 'gpt-4.1', name: 'GPT-4.1', tier: 'business' },
+  { id: 'gpt-4.1-mini', name: 'GPT-4.1 Mini', tier: 'business' },
+  { id: 'gpt-4.1-nano', name: 'GPT-4.1 Nano', tier: 'business' },
+  { id: 'o3', name: 'O3', tier: 'business' },
+  { id: 'o4-mini', name: 'O4 Mini', tier: 'business' },
+  { id: 'gpt-4o-realtime-preview', name: 'GPT-4o Realtime Preview', tier: 'business' },
 ] as const;
 
 export const TIER_CONFIGS: Record<TierName, TierConfig> = {
-  free: {
-    name: 'free',
-    displayName: 'Free Plan',
-    price: 0,
-    features: {
-      messageCreditsPerMonth: 50,
-      storageLimitMB: 0.4, // 400 KB
-      aiActionsPerAgent: 0,
-      unlimitedWebsites: true,
-      linkTrainingLimit: 10,
-      integrations: false,
-      apiAccess: false,
-      analytics: 'none',
-      autoRetrain: false,
-      inactivityDeletionDays: 14,
-      modelAccess: 'limited',
+  starter: {
+    name: 'starter',
+    displayName: 'Starter',
+    pricing: {
+      monthly: 99,
+      annual: 1068,
+      annualMonthly: 89,
     },
-  },
-  hobby: {
-    name: 'hobby',
-    displayName: 'Hobby Plan',
-    price: 40,
     features: {
-      messageCreditsPerMonth: 1500,
-      storageLimitMB: 20,
+      messageCreditsPerMonth: 10000,
+      storageLimitMB: 50,
       aiActionsPerAgent: 5,
       unlimitedWebsites: true,
       linkTrainingLimit: 'unlimited',
-      integrations: true,
-      apiAccess: true,
-      analytics: 'basic',
-      autoRetrain: false,
-      inactivityDeletionDays: null,
-      modelAccess: 'advanced',
-    },
-  },
-  standard: {
-    name: 'standard',
-    displayName: 'Standard Plan',
-    price: 150,
-    features: {
-      messageCreditsPerMonth: 10000,
-      storageLimitMB: 40,
-      aiActionsPerAgent: 10,
-      unlimitedWebsites: true,
-      linkTrainingLimit: 'unlimited',
-      integrations: true,
-      apiAccess: true,
+      integrations: false,
+      apiAccess: false,
       analytics: 'basic',
       autoRetrain: true,
       inactivityDeletionDays: null,
-      modelAccess: 'advanced',
+      modelAccess: 'limited',
+      websiteEmbed: true,
+      leadCapture: true,
+      emailTranscripts: true,
+      conversationHistoryExport: true,
+      autoSyncDataSources: false,
+      supportLevel: 'email',
+      trainingSessions: 0,
+      monthlyStrategyCalls: false,
+      quarterlyBusinessReviews: false,
+      customDataRetention: false,
     },
   },
-  pro: {
-    name: 'pro',
-    displayName: 'Pro Plan',
-    price: 500,
+  professional: {
+    name: 'professional',
+    displayName: 'Professional',
+    pricing: {
+      monthly: 199,
+      annual: 2268,
+      annualMonthly: 189,
+    },
     features: {
-      messageCreditsPerMonth: 40000,
-      storageLimitMB: 60,
-      aiActionsPerAgent: 15,
+      messageCreditsPerMonth: 25000,
+      storageLimitMB: 100,
+      aiActionsPerAgent: 10,
       unlimitedWebsites: true,
       linkTrainingLimit: 'unlimited',
       integrations: true,
@@ -167,6 +177,99 @@ export const TIER_CONFIGS: Record<TierName, TierConfig> = {
       autoRetrain: true,
       inactivityDeletionDays: null,
       modelAccess: 'advanced',
+      websiteEmbed: true,
+      leadCapture: true,
+      emailTranscripts: true,
+      conversationHistoryExport: true,
+      autoSyncDataSources: true,
+      supportLevel: 'priority-email',
+      trainingSessions: 1,
+      monthlyStrategyCalls: false,
+      quarterlyBusinessReviews: false,
+      customDataRetention: false,
+    },
+  },
+  business: {
+    name: 'business',
+    displayName: 'Business',
+    pricing: {
+      monthly: 299,
+      annual: 2988,
+      annualMonthly: 249,
+    },
+    features: {
+      messageCreditsPerMonth: 50000,
+      storageLimitMB: 200,
+      aiActionsPerAgent: 20,
+      unlimitedWebsites: true,
+      linkTrainingLimit: 'unlimited',
+      integrations: true,
+      apiAccess: true,
+      analytics: 'advanced',
+      autoRetrain: true,
+      inactivityDeletionDays: null,
+      modelAccess: 'advanced',
+      websiteEmbed: true,
+      leadCapture: true,
+      emailTranscripts: true,
+      conversationHistoryExport: true,
+      autoSyncDataSources: true,
+      supportLevel: 'dedicated',
+      trainingSessions: 2,
+      monthlyStrategyCalls: true,
+      quarterlyBusinessReviews: false,
+      customDataRetention: true,
+    },
+  },
+  enterprise: {
+    name: 'enterprise',
+    displayName: 'Enterprise',
+    pricing: {
+      monthly: 999,
+      annual: 11988,
+      annualMonthly: 999, // Custom pricing, using base as placeholder
+    },
+    features: {
+      messageCreditsPerMonth: 100000,
+      storageLimitMB: 500,
+      aiActionsPerAgent: 50,
+      unlimitedWebsites: true,
+      linkTrainingLimit: 'unlimited',
+      integrations: true,
+      apiAccess: true,
+      analytics: 'advanced',
+      autoRetrain: true,
+      inactivityDeletionDays: null,
+      modelAccess: 'advanced',
+      websiteEmbed: true,
+      leadCapture: true,
+      emailTranscripts: true,
+      conversationHistoryExport: true,
+      autoSyncDataSources: true,
+      supportLevel: 'dedicated',
+      trainingSessions: 3,
+      monthlyStrategyCalls: true,
+      quarterlyBusinessReviews: true,
+      customDataRetention: true,
     },
   },
 };
+
+// Available Add-ons
+export const AVAILABLE_ADDONS: AddOn[] = [
+  {
+    id: 'extra-messages',
+    name: 'Extra Messages',
+    description: '2,500 additional messages per month',
+    price: 25,
+    type: 'extra_messages',
+    value: 2500,
+  },
+  {
+    id: 'remove-branding',
+    name: 'Remove Branding',
+    description: 'Remove "Powered by Strikebot" branding',
+    price: 199,
+    type: 'remove_branding',
+  },
+];
