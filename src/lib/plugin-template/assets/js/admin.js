@@ -775,10 +775,17 @@
     // Chatbot configuration form
     $('#strikebot-config-form').on('submit', function(e) {
         e.preventDefault();
+        e.stopPropagation();
 
         const instructions = $('#chatbot-instructions').val();
         const removeBranding = $('#remove-branding').is(':checked');
         const $status = $('#config-save-status');
+        const $btn = $('#config-save-btn');
+        const originalText = $btn.text();
+
+        // Disable button and show loading state
+        $btn.prop('disabled', true).text('Saving...');
+        $status.hide();
 
         $.ajax({
             url: strikebotAdmin.ajaxUrl,
@@ -796,10 +803,17 @@
                     alert(response.data.message || 'Error saving configuration');
                 }
             },
-            error: function() {
-                alert('Error saving configuration');
+            error: function(xhr, status, error) {
+                console.error('Save error:', { status: status, error: error, response: xhr.responseText });
+                alert('Error saving configuration. Please try again.');
+            },
+            complete: function() {
+                // Re-enable button
+                $btn.prop('disabled', false).text(originalText);
             }
         });
+
+        return false;
     });
 
 })(jQuery);
