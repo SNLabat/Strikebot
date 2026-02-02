@@ -120,6 +120,8 @@ class Strikebot {
         add_action('wp_ajax_strikebot_email_logs', array($this, 'email_logs'));
         add_action('wp_ajax_strikebot_email_analytics', array($this, 'email_analytics'));
         add_action('wp_ajax_strikebot_debug_urls', array($this, 'debug_urls'));
+        add_action('wp_ajax_strikebot_rate_message', array($this, 'rate_message'));
+        add_action('wp_ajax_nopriv_strikebot_rate_message', array($this, 'rate_message'));
     }
 
     public function activate() {
@@ -158,10 +160,23 @@ class Strikebot {
             UNIQUE KEY month (month)
         ) $charset_collate;";
 
+        $ratings_table = $wpdb->prefix . 'strikebot_ratings';
+        $sql4 = "CREATE TABLE $ratings_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            session_id varchar(100) NOT NULL,
+            message_id bigint(20),
+            rating varchar(10) NOT NULL,
+            feedback text,
+            created_at datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY session_id (session_id)
+        ) $charset_collate;";
+
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
         dbDelta($sql2);
         dbDelta($sql3);
+        dbDelta($sql4);
 
         $defaults = array(
             'name' => $this->config['name'] ?? 'Chatbot',
@@ -806,6 +821,43 @@ class Strikebot {
             $url_list[] = array('id' => $url_entry->id, 'name' => $url_entry->name, 'normalized' => $normalized, 'crawled_url' => $crawled_url, 'metadata' => $url_entry->metadata, 'created_at' => $url_entry->created_at);
         }
         wp_send_json_success(array('total_urls' => count($url_list), 'urls' => $url_list));
+    }
+
+    public function rate_message() {
+        check_ajax_referer('strikebot_chat', 'nonce');
+
+        $session_id = sanitize_text_field($_POST['session_id'] ?? '');
+        $rating = sanitize_text_field($_POST['rating'] ?? '');
+        $feedback = sanitize_textarea_field($_POST['feedback'] ?? '');
+        $message_id = intval($_POST['message_id'] ?? 0);
+
+        if (empty($session_id) || empty($rating)) {
+            wp_send_json_error(array('message' => 'Session ID and rating are required'));
+            return;
+        }
+
+        if (!in_array($rating, array('positive', 'negative'))) {
+            wp_send_json_error(array('message' => 'Invalid rating value'));
+            return;
+        }
+
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_ratings';
+
+        $result = $wpdb->insert($table, array(
+            'session_id' => $session_id,
+            'message_id' => $message_id > 0 ? $message_id : null,
+            'rating' => $rating,
+            'feedback' => $feedback,
+            'created_at' => current_time('mysql')
+        ));
+
+        if ($result === false) {
+            wp_send_json_error(array('message' => 'Failed to save rating'));
+            return;
+        }
+
+        wp_send_json_success(array('message' => 'Rating saved', 'rating_id' => $wpdb->insert_id));
     }
 
     private function is_fullscreen_help_page_enabled() {

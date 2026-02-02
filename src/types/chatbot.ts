@@ -67,6 +67,17 @@ export interface ChatbotConfig {
     welcomeMessage: string;
     placeholder: string;
     iconUrl: string;
+    suggestedQuestions?: string[];
+    showSuggestedQuestions?: boolean;
+    triggerDelay?: number;
+    triggerScroll?: number;
+    businessHours?: {
+      enabled: boolean;
+      timezone: string;
+      schedule: {
+        [key: string]: { start: string; end: string; enabled: boolean };
+      };
+    };
   };
 
   // Limits from tier

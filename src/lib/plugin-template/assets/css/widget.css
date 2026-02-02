@@ -462,3 +462,55 @@
 .strikebot-chat-messages::-webkit-scrollbar-thumb:hover {
     background: #9ca3af;
 }
+
+/* Rating buttons */
+.strikebot-rating {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.strikebot-dark .strikebot-rating {
+    border-top-color: #374151;
+}
+
+.strikebot-rating-btn {
+    padding: 6px;
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.strikebot-rating-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: var(--sb-primary);
+    color: var(--sb-primary);
+}
+
+.strikebot-rating-btn.strikebot-rating-selected {
+    background: var(--sb-primary);
+    border-color: var(--sb-primary);
+    color: white;
+}
+
+.strikebot-rating-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.strikebot-dark .strikebot-rating-btn {
+    border-color: #374151;
+    color: #9ca3af;
+}
+
+.strikebot-dark .strikebot-rating-btn:hover:not(:disabled) {
+    background: #374151;
+}

@@ -68,11 +68,78 @@
             }
         }
 
-        messageDiv.innerHTML = avatarHtml +
-            '<div class="strikebot-message-content">' + escapeHtml(content) + '</div>';
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'strikebot-message-content';
+        contentDiv.textContent = content;
+
+        messageDiv.appendChild(contentDiv);
+        if (avatarHtml) {
+            messageDiv.insertAdjacentHTML('afterbegin', avatarHtml);
+        }
 
         messages.appendChild(messageDiv);
+
+        // Add rating buttons for bot messages
+        if (!isUser) {
+            addRatingButtons(contentDiv);
+        }
+
         messages.scrollTop = messages.scrollHeight;
+    }
+
+    // Add rating buttons to bot message
+    function addRatingButtons(messageElement) {
+        const ratingDiv = document.createElement('div');
+        ratingDiv.className = 'strikebot-rating';
+        ratingDiv.innerHTML =
+            '<button class="strikebot-rating-btn strikebot-rating-up" data-rating="positive" title="Helpful" aria-label="This was helpful">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>' +
+            '</svg>' +
+            '</button>' +
+            '<button class="strikebot-rating-btn strikebot-rating-down" data-rating="negative" title="Not helpful" aria-label="This was not helpful">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">' +
+            '<path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path>' +
+            '</svg>' +
+            '</button>';
+
+        messageElement.appendChild(ratingDiv);
+
+        // Add click handlers
+        ratingDiv.querySelectorAll('.strikebot-rating-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const rating = this.dataset.rating;
+                submitRating(rating);
+
+                // Visual feedback
+                this.classList.add('strikebot-rating-selected');
+                ratingDiv.querySelectorAll('.strikebot-rating-btn').forEach(function(b) {
+                    b.disabled = true;
+                });
+            });
+        });
+    }
+
+    // Submit rating to server
+    function submitRating(rating) {
+        const formData = new FormData();
+        formData.append('action', 'strikebot_rate_message');
+        formData.append('nonce', strikebotWidget.nonce);
+        formData.append('session_id', sessionId);
+        formData.append('rating', rating);
+
+        fetch(strikebotWidget.ajaxUrl, {
+            method: 'POST',
+            body: formData
+        }).then(function(response) {
+            return response.json();
+        }).then(function(data) {
+            if (!data.success) {
+                console.error('Failed to save rating:', data.data?.message);
+            }
+        }).catch(function(error) {
+            console.error('Rating submission error:', error);
+        });
     }
 
     // Add typing indicator
