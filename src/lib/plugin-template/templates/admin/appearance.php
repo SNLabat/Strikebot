@@ -103,6 +103,14 @@ $admin_theme_class = $admin_theme === 'dark' ? 'strikebot-dark-mode' : '';
                     </div>
                 </div>
 
+                <div class="strikebot-form-group">
+                    <label>
+                        <input type="checkbox" name="widget[hideWidget]" value="1" <?php checked(!empty($widget['hideWidget'])); ?>>
+                        <span style="font-weight: normal;">Temporarily hide chat widget from website</span>
+                    </label>
+                    <p class="description" style="margin-left: 24px;">Check this to hide the chat widget without deactivating the plugin. Useful for maintenance or testing.</p>
+                </div>
+
                 <div class="strikebot-form-actions">
                     <button type="submit" class="button button-primary button-large">Save Changes</button>
                 </div>

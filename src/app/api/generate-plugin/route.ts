@@ -215,9 +215,16 @@ class Strikebot {
     }
 
     public function frontend_scripts() {
+        $settings = get_option('strikebot_settings');
+        $widget = $settings['widget'] ?? array();
+
+        // Don't load scripts if widget is hidden
+        if (!empty($widget['hideWidget']) && $widget['hideWidget'] === '1') {
+            return;
+        }
+
         wp_enqueue_style('strikebot-widget', STRIKEBOT_PLUGIN_URL . 'assets/css/widget.css', array(), STRIKEBOT_VERSION);
         wp_enqueue_script('strikebot-widget', STRIKEBOT_PLUGIN_URL . 'assets/js/widget.js', array(), STRIKEBOT_VERSION, true);
-        $settings = get_option('strikebot_settings');
         wp_localize_script('strikebot-widget', 'strikebotWidget', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('strikebot_chat'),
@@ -229,7 +236,17 @@ class Strikebot {
     public function render_knowledge_page() { include STRIKEBOT_PLUGIN_DIR . 'templates/admin/knowledge.php'; }
     public function render_appearance_page() { include STRIKEBOT_PLUGIN_DIR . 'templates/admin/appearance.php'; }
     public function render_settings_page() { include STRIKEBOT_PLUGIN_DIR . 'templates/admin/settings.php'; }
-    public function render_widget() { include STRIKEBOT_PLUGIN_DIR . 'templates/widget.php'; }
+    public function render_widget() {
+        $settings = get_option('strikebot_settings');
+        $widget = $settings['widget'] ?? array();
+
+        // Don't render widget if it's hidden
+        if (!empty($widget['hideWidget']) && $widget['hideWidget'] === '1') {
+            return;
+        }
+
+        include STRIKEBOT_PLUGIN_DIR . 'templates/widget.php';
+    }
 
     public function handle_chat() {
         check_ajax_referer('strikebot_chat', 'nonce');
@@ -382,7 +399,12 @@ class Strikebot {
             $settings['removeBranding'] = ($_POST['removeBranding'] === 'true' || $_POST['removeBranding'] === '1');
         }
         if (isset($_POST['theme'])) { $settings['theme'] = array_map('sanitize_text_field', $_POST['theme']); }
-        if (isset($_POST['widget'])) { $settings['widget'] = array_map('sanitize_text_field', $_POST['widget']); }
+        if (isset($_POST['widget'])) {
+            $widget_settings = $_POST['widget'];
+            // Handle hideWidget checkbox specially since it won't be in POST if unchecked
+            $widget_settings['hideWidget'] = isset($widget_settings['hideWidget']) ? '1' : '0';
+            $settings['widget'] = array_map('sanitize_text_field', $widget_settings);
+        }
         if (isset($_POST['api_key'])) { update_option('strikebot_api_key', sanitize_text_field($_POST['api_key'])); }
 
         $result = update_option('strikebot_settings', $settings);
