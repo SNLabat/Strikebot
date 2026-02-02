@@ -76,8 +76,24 @@
                     const $results = $('#sitemap-results');
                     const $list = $results.find('.strikebot-url-list');
 
+                    // Deduplicate URLs before displaying
+                    const originalCount = response.data.urls.length;
+                    const uniqueUrls = deduplicateUrls(response.data.urls);
+                    const duplicatesFound = originalCount - uniqueUrls.length;
+
                     $list.empty();
-                    response.data.urls.forEach(function(url) {
+
+                    // Show deduplication message if duplicates were found
+                    if (duplicatesFound > 0) {
+                        $list.append(
+                            '<div class="strikebot-info-message" style="background: #fff3cd; padding: 12px; margin-bottom: 12px; border-radius: 4px; border-left: 4px solid #ffc107;">' +
+                                '<strong>Note:</strong> Found ' + duplicatesFound + ' duplicate URL' + (duplicatesFound > 1 ? 's' : '') + ' in sitemap (already filtered out). ' +
+                                'Showing ' + uniqueUrls.length + ' unique URLs.' +
+                            '</div>'
+                        );
+                    }
+
+                    uniqueUrls.forEach(function(url) {
                         $list.append(
                             '<div class="strikebot-url-item">' +
                                 '<input type="checkbox" class="sitemap-url-checkbox" value="' + url + '" checked>' +
@@ -152,12 +168,63 @@
             }
         }
         
+        // Normalize URL for duplicate detection (matches PHP normalize_url function)
+        function normalizeUrl(url) {
+            if (!url) return '';
+
+            try {
+                const urlObj = new URL(url);
+
+                // Remove www. prefix
+                let host = urlObj.hostname.toLowerCase();
+                if (host.startsWith('www.')) {
+                    host = host.substring(4);
+                }
+
+                // Remove trailing slash from path
+                let path = urlObj.pathname;
+                if (path.endsWith('/') && path.length > 1) {
+                    path = path.slice(0, -1);
+                }
+
+                // Rebuild URL without query/fragment
+                const normalized = urlObj.protocol + '//' + host + path;
+                return normalized.toLowerCase();
+            } catch (e) {
+                // Fallback for invalid URLs
+                return url.toLowerCase().replace(/\/$/, '').replace(/^www\./, '');
+            }
+        }
+
+        // Remove duplicate URLs before crawling
+        function deduplicateUrls(urlList) {
+            const seen = new Set();
+            const unique = [];
+            const duplicates = [];
+
+            urlList.forEach(url => {
+                const normalized = normalizeUrl(url);
+                if (!seen.has(normalized)) {
+                    seen.add(normalized);
+                    unique.push(url);
+                } else {
+                    duplicates.push(url);
+                }
+            });
+
+            if (duplicates.length > 0) {
+                console.log('Pre-filtered ' + duplicates.length + ' duplicate URLs:', duplicates);
+            }
+
+            return unique;
+        }
+
         // Process URLs sequentially to avoid overwhelming the server
         function processUrl(index) {
             if (index >= urls.length) {
                 return;
             }
-            
+
             const url = urls[index];
             console.log('Crawling URL ' + (index + 1) + '/' + urls.length + ':', url);
             

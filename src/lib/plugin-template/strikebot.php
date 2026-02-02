@@ -751,10 +751,22 @@ class Strikebot {
             }
             
             if ($existing) {
+                // Provide detailed duplicate information for debugging
+                $duplicate_info = 'URL already exists in knowledge base. ';
+                $duplicate_info .= 'Attempted: ' . $url_to_check . ' ';
+                $duplicate_info .= '(normalizes to: ' . $normalized_url . ') ';
+                $duplicate_info .= '| Existing: ' . $existing->name;
+
                 wp_send_json_error(array(
-                    'message' => 'This URL already exists in the knowledge base: ' . $existing->name,
+                    'message' => $duplicate_info,
                     'duplicate_id' => $existing->id,
-                    'is_duplicate' => true
+                    'is_duplicate' => true,
+                    'debug' => array(
+                        'attempted_url' => $url_to_check,
+                        'attempted_normalized' => $normalized_url,
+                        'existing_name' => $existing->name,
+                        'existing_id' => $existing->id
+                    )
                 ));
             }
         }
@@ -938,34 +950,37 @@ class Strikebot {
         if (empty($url)) {
             return '';
         }
-        
+
         // Parse URL to handle components properly
         $parsed = parse_url($url);
         if (!$parsed) {
             // If parse_url fails, just do basic normalization
             return rtrim(strtolower(trim($url)), '/');
         }
-        
+
         // Reconstruct URL with normalized components
         $scheme = isset($parsed['scheme']) ? strtolower($parsed['scheme']) : 'https';
         $host = isset($parsed['host']) ? strtolower($parsed['host']) : '';
-        
+
         // Remove 'www.' prefix for consistency
         if (strpos($host, 'www.') === 0) {
             $host = substr($host, 4);
         }
-        
-        $path = isset($parsed['path']) ? rtrim($parsed['path'], '/') : '';
-        // Normalize path - remove trailing slash
+
+        // Get path and remove trailing slash (but keep single slash for root)
+        $path = isset($parsed['path']) ? $parsed['path'] : '';
+        if ($path !== '/' && substr($path, -1) === '/') {
+            $path = substr($path, 0, -1);
+        }
         if ($path === '/') {
             $path = '';
         }
-        
+
         // Rebuild normalized URL (without query/fragment for comparison)
         $normalized = $scheme . '://' . $host . $path;
-        
-        // Convert to lowercase and remove trailing slash
-        return strtolower(rtrim($normalized, '/'));
+
+        // Convert to lowercase
+        return strtolower($normalized);
     }
 
     private function extract_text_from_html($html) {
