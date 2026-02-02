@@ -35,6 +35,7 @@ interface ChatbotConfig {
     autoRetrain: boolean;
     modelAccess: string;
   };
+  addOns: Array<{ id: string; name: string; type: string; value?: number }>;
   createdAt: string;
 }
 
