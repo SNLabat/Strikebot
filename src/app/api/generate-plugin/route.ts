@@ -845,9 +845,16 @@ export async function POST(request: NextRequest) {
 
     const configJson = JSON.stringify(sanitizedConfig).replace(/'/g, "\\'");
 
+    // Sanitize chatbot name for WordPress plugin header (must not contain */ or newlines)
+    const pluginHeaderName = (config.name || 'My Chatbot')
+      .replace(/\*\//g, '')
+      .replace(/[\r\n]+/g, ' ')
+      .trim()
+      .slice(0, 128) || 'My Chatbot';
+
     // Add main plugin file
     const mainPluginContent = pluginTemplates['strikebot.php']
-      .replace('{{CHATBOT_NAME}}', config.name)
+      .replace('{{CHATBOT_NAME}}', pluginHeaderName)
       .replace('{{CONFIG_JSON}}', configJson);
 
     archive.append(mainPluginContent, { name: 'strikebot/strikebot.php' });
