@@ -45,11 +45,74 @@ class FullscreenChatbot {
     }
 
     public function register_settings() {
-        register_setting('fullscreen_chatbot_settings_group', $this->option_name);
+        register_setting('fullscreen_chatbot_settings_group', $this->option_name, array(
+            'sanitize_callback' => array($this, 'sanitize_settings')
+        ));
+    }
+
+    /**
+     * Preset accent colors: name => [primary_hex, secondary_hex for gradient]
+     */
+    public static function get_accent_presets() {
+        return array(
+            'purple'  => array('#667eea', '#764ba2'),
+            'red'     => array('#ef4444', '#b91c1c'),
+            'blue'    => array('#3b82f6', '#1d4ed8'),
+            'orange'  => array('#f97316', '#c2410c'),
+            'green'   => array('#22c55e', '#15803d'),
+            'teal'    => array('#14b8a6', '#0d9488'),
+            'pink'    => array('#ec4899', '#be185d'),
+            'indigo'  => array('#6366f1', '#4338ca'),
+        );
+    }
+
+    public function sanitize_settings($input) {
+        if (!is_array($input)) {
+            return $input;
+        }
+        $presets = self::get_accent_presets();
+        if (isset($input['accent_mode'])) {
+            $input['accent_mode'] = ($input['accent_mode'] === 'custom') ? 'custom' : 'preset';
+        }
+        if (isset($input['accent_preset']) && !isset($presets[$input['accent_preset']])) {
+            $input['accent_preset'] = 'purple';
+        }
+        if (!empty($input['accent_hex'])) {
+            $hex = sanitize_hex_color($input['accent_hex']);
+            $input['accent_hex'] = $hex ? $hex : '#667eea';
+        }
+        return $input;
+    }
+
+    /**
+     * Get resolved accent hex pair [primary, secondary] from saved settings.
+     */
+    public function get_accent_colors() {
+        $settings = get_option($this->option_name, array());
+        $presets = self::get_accent_presets();
+        $mode = $settings['accent_mode'] ?? 'preset';
+        if ($mode === 'custom' && !empty($settings['accent_hex'])) {
+            $primary = $settings['accent_hex'];
+            $secondary = $this->darken_hex($primary, 0.85);
+            return array($primary, $secondary);
+        }
+        $preset = $settings['accent_preset'] ?? 'purple';
+        return $presets[$preset] ?? $presets['purple'];
+    }
+
+    private function darken_hex($hex, $factor) {
+        $hex = ltrim($hex, '#');
+        if (strlen($hex) !== 6) {
+            return $hex;
+        }
+        $r = max(0, min(255, round(hexdec(substr($hex, 0, 2)) * $factor)));
+        $g = max(0, min(255, round(hexdec(substr($hex, 2, 2)) * $factor)));
+        $b = max(0, min(255, round(hexdec(substr($hex, 4, 2)) * $factor)));
+        return '#' . sprintf('%02x%02x%02x', $r, $g, $b);
     }
 
     public function enqueue_admin_scripts($hook) {
-        if ($hook !== 'toplevel_page_fullscreen-chatbot') {
+        if ($hook !== 'toplevel_page_fullscreen-chatbot' && $hook !== 'strikebot_page_fullscreen-chatbot') {
             return;
         }
         wp_enqueue_media();
@@ -186,6 +249,57 @@ class FullscreenChatbot {
                             </div>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row">
+                            <label><?php esc_html_e('Theme / Accent Color', 'fullscreen-chatbot'); ?></label>
+                        </th>
+                        <td>
+                            <p class="description" style="margin-bottom: 12px;">Customize the send button, user message bubbles, and bot accent (e.g. icon).</p>
+                            <fieldset class="chatbot-accent-settings">
+                                <label>
+                                    <input type="radio" name="<?php echo esc_attr($this->option_name); ?>[accent_mode]" value="preset" <?php checked(($settings['accent_mode'] ?? 'preset'), 'preset'); ?>>
+                                    <?php esc_html_e('Preset color', 'fullscreen-chatbot'); ?>
+                                </label>
+                                <label style="margin-left: 16px;">
+                                    <input type="radio" name="<?php echo esc_attr($this->option_name); ?>[accent_mode]" value="custom" <?php checked($settings['accent_mode'] ?? '', 'custom'); ?>>
+                                    <?php esc_html_e('Custom color (hex / eyedropper)', 'fullscreen-chatbot'); ?>
+                                </label>
+                            </fieldset>
+                            <div class="chatbot-accent-presets" style="margin-top: 12px;">
+                                <span style="display: inline-block; margin-right: 8px; vertical-align: middle;"><?php esc_html_e('Preset:', 'fullscreen-chatbot'); ?></span>
+                                <?php
+                                $presets = $this->get_accent_presets();
+                                $current_preset = $settings['accent_preset'] ?? 'purple';
+                                foreach ($presets as $key => $colors):
+                                    $primary = $colors[0];
+                                    $title = ucfirst($key);
+                                ?>
+                                    <label class="chatbot-preset-swatch" title="<?php echo esc_attr($title); ?>" style="display: inline-flex; align-items: center; margin-right: 4px; margin-bottom: 8px; cursor: pointer; vertical-align: middle;">
+                                        <input type="radio" name="<?php echo esc_attr($this->option_name); ?>[accent_preset]" value="<?php echo esc_attr($key); ?>" <?php checked($current_preset, $key); ?>>
+                                        <span class="preset-color-box" style="width: 28px; height: 28px; border-radius: 6px; margin-left: 4px; background: linear-gradient(135deg, <?php echo esc_attr($primary); ?> 0%, <?php echo esc_attr($colors[1]); ?> 100%); border: 2px solid <?php echo $current_preset === $key ? '#1f2937' : 'transparent'; ?>; box-sizing: border-box;"></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="chatbot-accent-custom" style="margin-top: 12px; display: <?php echo (isset($settings['accent_mode']) && $settings['accent_mode'] === 'custom') ? 'block' : 'none'; ?>;">
+                                <label style="display: inline-flex; align-items: center; gap: 10px;">
+                                    <span><?php esc_html_e('Custom color:', 'fullscreen-chatbot'); ?></span>
+                                    <input type="color"
+                                           id="accent_color_picker"
+                                           name="<?php echo esc_attr($this->option_name); ?>[accent_hex]"
+                                           value="<?php echo esc_attr($settings['accent_hex'] ?? '#667eea'); ?>"
+                                           style="width: 48px; height: 36px; padding: 2px; cursor: pointer; border-radius: 6px;">
+                                    <input type="text"
+                                           id="accent_hex_input"
+                                           value="<?php echo esc_attr($settings['accent_hex'] ?? '#667eea'); ?>"
+                                           pattern="^#[0-9A-Fa-f]{6}$"
+                                           maxlength="7"
+                                           placeholder="#667eea"
+                                           style="width: 90px; font-family: monospace;">
+                                </label>
+                                <p class="description"><?php esc_html_e('Use the color box for eyedropper (browser support) or enter a hex code.', 'fullscreen-chatbot'); ?></p>
+                            </div>
+                        </td>
+                    </tr>
                 </table>
                 <?php submit_button(); ?>
             </form>
@@ -211,12 +325,22 @@ class FullscreenChatbot {
         $page_id = $settings['page_id'] ?? '';
 
         if (is_page($page_id) && !empty($page_id)) {
+            list($accent_primary, $accent_secondary) = $this->get_accent_colors();
+            $accent_css = sprintf(
+                ":root { --accent-primary: %s; --accent-secondary: %s; --accent-gradient: linear-gradient(135deg, %s 0%%, %s 100%%); }\n",
+                esc_attr($accent_primary),
+                esc_attr($accent_secondary),
+                esc_attr($accent_primary),
+                esc_attr($accent_secondary)
+            );
+
             wp_enqueue_style(
                 'fullscreen-chatbot-style',
                 plugin_dir_url(__FILE__) . 'chatbot-style.css',
                 array(),
                 '3.1.0'
             );
+            wp_add_inline_style('fullscreen-chatbot-style', $accent_css);
 
             wp_enqueue_script(
                 'fullscreen-chatbot-script',

@@ -1,6 +1,23 @@
 jQuery(document).ready(function($) {
     let mediaUploader;
 
+    // Theme / Accent color: show custom row when "Custom" is selected
+    $('input[name*="[accent_mode]"]').on('change', function() {
+        var isCustom = $(this).filter(':checked').val() === 'custom';
+        $('.chatbot-accent-custom').toggle(isCustom);
+    });
+
+    // Sync color picker and hex text input
+    $('#accent_color_picker').on('input change', function() {
+        $('#accent_hex_input').val(this.value);
+    });
+    $('#accent_hex_input').on('input change', function() {
+        var val = $(this).val();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            $('#accent_color_picker').val(val);
+        }
+    });
+
     // Handle logo upload
     $('.upload-logo-button').on('click', function(e) {
         e.preventDefault();
