@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('STRIKEBOT_VERSION', '1.3.0');
+define('STRIKEBOT_VERSION', '1.3.1');
 define('STRIKEBOT_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STRIKEBOT_PLUGIN_URL', plugin_dir_url(__FILE__));
 
