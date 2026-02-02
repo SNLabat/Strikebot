@@ -149,23 +149,104 @@
         function checkComplete() {
             if (completed === urls.length) {
                 $btn.prop('disabled', false).text('Crawl Selected URLs');
-                let message = 'Crawl complete!\n\nSaved: ' + saved;
-                if (skipped > 0) {
-                    message += '\nSkipped (duplicates): ' + skipped;
-                }
-                message += '\nFailed: ' + failed + '\nTotal: ' + urls.length;
-                
+
+                // Build detailed copyable report
+                let message = 'CRAWL COMPLETE REPORT\n';
+                message += '='.repeat(60) + '\n\n';
+                message += 'SUMMARY:\n';
+                message += '  Saved: ' + saved + '\n';
+                message += '  Skipped (duplicates): ' + skipped + '\n';
+                message += '  Failed: ' + failed + '\n';
+                message += '  Total: ' + urls.length + '\n';
+
                 if (skipped > 0 && skipped_urls.length > 0) {
-                    message += '\n\nSkipped URLs:\n' + skipped_urls.slice(0, 10).join('\n');
+                    message += '\n' + '='.repeat(60) + '\n';
+                    message += 'DUPLICATE URLs (' + skipped_urls.length + '):\n';
+                    message += '='.repeat(60) + '\n';
+                    skipped_urls.forEach(function(item, index) {
+                        message += (index + 1) + '. ' + item + '\n';
+                    });
                 }
+
                 if (failed > 0 && errors.length > 0) {
-                    message += '\n\nErrors:\n' + errors.slice(0, 10).join('\n');
+                    message += '\n' + '='.repeat(60) + '\n';
+                    message += 'ERRORS (' + errors.length + '):\n';
+                    message += '='.repeat(60) + '\n';
+                    errors.forEach(function(item, index) {
+                        message += (index + 1) + '. ' + item + '\n';
+                    });
                 }
-                alert(message);
+
+                message += '\n' + '='.repeat(60) + '\n';
+                message += 'Generated: ' + new Date().toLocaleString() + '\n';
+
+                // Show copyable modal
+                showCopyableReport('Crawl Complete', message);
+
                 if (saved > 0) {
-                    location.reload();
+                    setTimeout(function() {
+                        location.reload();
+                    }, 500);
                 }
             }
+        }
+
+        // Show copyable report modal
+        function showCopyableReport(title, content) {
+            const modal = $('<div class="strikebot-modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 999999; display: flex; align-items: center; justify-content: center;"></div>');
+            const modalContent = $('<div class="strikebot-modal" style="background: white; border-radius: 8px; width: 90%; max-width: 700px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.3);"></div>');
+
+            modalContent.html(
+                '<div class="strikebot-modal-header" style="padding: 20px; border-bottom: 1px solid #ddd; display: flex; align-items: center; justify-content: space-between;">' +
+                    '<h3 style="margin: 0; font-size: 18px;">' + title + '</h3>' +
+                    '<button class="strikebot-modal-close" style="background: none; border: none; font-size: 28px; cursor: pointer; color: #666; line-height: 1; padding: 0; width: 30px; height: 30px;">&times;</button>' +
+                '</div>' +
+                '<div class="strikebot-modal-body" style="padding: 20px; flex: 1; overflow: auto;">' +
+                    '<textarea readonly class="strikebot-report-text" style="width: 100%; height: 400px; font-family: Monaco, Consolas, monospace; font-size: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 4px; resize: vertical; background: #f8f9fa;">' + content + '</textarea>' +
+                '</div>' +
+                '<div class="strikebot-modal-footer" style="padding: 20px; border-top: 1px solid #ddd; display: flex; gap: 10px; justify-content: flex-end;">' +
+                    '<button class="button button-primary strikebot-copy-btn">📋 Copy to Clipboard</button>' +
+                    '<button class="button strikebot-close-btn">Close</button>' +
+                '</div>'
+            );
+            modal.append(modalContent);
+            $('body').append(modal);
+
+            // Copy button
+            modal.find('.strikebot-copy-btn').on('click', function() {
+                const textarea = modal.find('textarea')[0];
+                textarea.select();
+                textarea.setSelectionRange(0, 99999); // For mobile
+                try {
+                    document.execCommand('copy');
+                    $(this).html('✓ Copied!').prop('disabled', true);
+                    setTimeout(function() {
+                        modal.find('.strikebot-copy-btn').html('📋 Copy to Clipboard').prop('disabled', false);
+                    }, 2000);
+                } catch (err) {
+                    alert('Failed to copy. Please select and copy manually.');
+                }
+            });
+
+            // Close buttons
+            modal.find('.strikebot-modal-close, .strikebot-close-btn').on('click', function() {
+                modal.remove();
+            });
+
+            // Close on overlay click
+            modal.on('click', function(e) {
+                if ($(e.target).hasClass('strikebot-modal-overlay')) {
+                    modal.remove();
+                }
+            });
+
+            // ESC key to close
+            $(document).on('keydown.strikebot-modal', function(e) {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                    $(document).off('keydown.strikebot-modal');
+                }
+            });
         }
         
         // Normalize URL for duplicate detection (matches PHP normalize_url function)
@@ -198,26 +279,45 @@
 
         // Remove duplicate URLs before crawling
         function deduplicateUrls(urlList) {
-            const seen = new Set();
+            const seen = new Map(); // Map normalized URL to original URL
             const unique = [];
             const duplicates = [];
 
             urlList.forEach(url => {
                 const normalized = normalizeUrl(url);
                 if (!seen.has(normalized)) {
-                    seen.add(normalized);
+                    seen.set(normalized, url);
                     unique.push(url);
                 } else {
-                    duplicates.push(url);
+                    const originalUrl = seen.get(normalized);
+                    duplicates.push({
+                        url: url,
+                        normalized: normalized,
+                        conflictsWith: originalUrl
+                    });
                 }
             });
 
             if (duplicates.length > 0) {
-                console.log('Pre-filtered ' + duplicates.length + ' duplicate URLs:', duplicates);
+                console.group('🔍 Pre-crawl Duplicate Detection');
+                console.log('Found ' + duplicates.length + ' duplicate URLs in sitemap:');
+                duplicates.forEach((dup, index) => {
+                    console.log((index + 1) + '. ' + dup.url);
+                    console.log('   Normalized: ' + dup.normalized);
+                    console.log('   Conflicts with: ' + dup.conflictsWith);
+                });
+                console.groupEnd();
             }
 
             return unique;
         }
+
+        // Log all URLs with their normalized versions before starting
+        console.group('📋 URLs to Crawl (' + urls.length + ' total)');
+        urls.forEach((url, index) => {
+            console.log((index + 1) + '. ' + url + ' → ' + normalizeUrl(url));
+        });
+        console.groupEnd();
 
         // Process URLs sequentially to avoid overwhelming the server
         function processUrl(index) {
@@ -226,7 +326,7 @@
             }
 
             const url = urls[index];
-            console.log('Crawling URL ' + (index + 1) + '/' + urls.length + ':', url);
+            console.log('🔄 Crawling URL ' + (index + 1) + '/' + urls.length + ':', url);
             
             $.ajax({
                 url: strikebotAdmin.ajaxUrl,
@@ -267,8 +367,19 @@
                                     // Check if it's a duplicate
                                     if (saveResponse && saveResponse.data && saveResponse.data.is_duplicate) {
                                         skipped++;
-                                        skipped_urls.push(url + ': Already exists');
-                                        console.log('Skipped duplicate:', url);
+
+                                        // Get detailed duplicate information
+                                        let duplicateInfo = url + '\n';
+                                        if (saveResponse.data.debug) {
+                                            const debug = saveResponse.data.debug;
+                                            duplicateInfo += '  → Normalized to: ' + (debug.attempted_normalized || 'N/A') + '\n';
+                                            duplicateInfo += '  → Conflicts with: ' + (debug.existing_name || 'N/A') + ' (ID: ' + (debug.existing_id || 'N/A') + ')';
+                                        } else {
+                                            duplicateInfo += '  → Reason: ' + (saveResponse.data.message || 'Already exists');
+                                        }
+
+                                        skipped_urls.push(duplicateInfo);
+                                        console.warn('❌ DUPLICATE:', url, saveResponse.data.debug || saveResponse.data.message);
                                     } else {
                                         failed++;
                                         const errorMsg = (saveResponse && saveResponse.data && saveResponse.data.message) ? saveResponse.data.message : 'Unknown save error';
