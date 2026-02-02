@@ -372,7 +372,7 @@ class FullscreenChatbot {
         $settings = get_option($this->option_name, array());
         $api_key = $settings['api_key'] ?? '';
         $model = $settings['model'] ?? 'gpt-4o';
-        $system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant.';
+        $base_system_prompt = $settings['system_prompt'] ?? 'You are a helpful assistant.';
 
         if (empty($api_key)) {
             wp_send_json_error(array('message' => 'API key not configured'));
@@ -384,6 +384,10 @@ class FullscreenChatbot {
         if (!is_array($history)) {
             $history = array();
         }
+
+        // Get knowledge base context and build enhanced system prompt
+        $knowledge_context = $this->get_knowledge_context($message);
+        $system_prompt = $this->build_system_prompt($base_system_prompt, $knowledge_context);
 
         // Build messages array
         $messages = array(
@@ -437,6 +441,81 @@ class FullscreenChatbot {
         } else {
             wp_send_json_error(array('message' => 'Invalid response from OpenAI'));
         }
+    }
+
+    /**
+     * Get knowledge context from Strikebot knowledge base
+     */
+    private function get_knowledge_context($query) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'strikebot_knowledge';
+
+        // Check if the table exists (Strikebot might not be installed)
+        $table_exists = $wpdb->get_var("SHOW TABLES LIKE '$table'") === $table;
+        if (!$table_exists) {
+            return '';
+        }
+
+        $items = $wpdb->get_results("SELECT * FROM $table ORDER BY CASE type WHEN 'qa' THEN 1 WHEN 'text' THEN 2 WHEN 'file' THEN 3 WHEN 'url' THEN 4 ELSE 5 END, created_at DESC");
+
+        $max_chars = 100000;
+        $context = "";
+        $items_included = 0;
+
+        foreach ($items as $item) {
+            if (empty($item->content)) { continue; }
+
+            $type_label = '';
+            switch ($item->type) {
+                case 'qa': $type_label = '[Q&A]'; break;
+                case 'url': $type_label = '[From webpage: ' . $item->name . ']'; break;
+                case 'file': $type_label = '[From document: ' . $item->name . ']'; break;
+                case 'text': $type_label = '[Information: ' . $item->name . ']'; break;
+                default: $type_label = '[' . ucfirst($item->type) . ': ' . $item->name . ']';
+            }
+
+            $content_to_add = $item->content;
+
+            $max_per_item = 5000;
+            if ($item->type === 'url') { $max_per_item = 3000; }
+            elseif ($item->type === 'file') { $max_per_item = 20000; }
+
+            if (strlen($content_to_add) > $max_per_item) {
+                $content_to_add = substr($content_to_add, 0, $max_per_item) . "\n[Content truncated - " . strlen($item->content) . " bytes total...]";
+            }
+
+            $item_content = "\n\n---\n" . $type_label . "\n" . $content_to_add;
+            $new_length = strlen($context) + strlen($item_content);
+
+            if ($new_length > $max_chars) {
+                $remaining = $max_chars - strlen($context);
+                if ($remaining > 200) {
+                    $context .= substr($item_content, 0, $remaining) . "\n[Truncated...]";
+                    $items_included++;
+                }
+                break;
+            }
+
+            $context .= $item_content;
+            $items_included++;
+        }
+
+        error_log('Fullscreen Chatbot: Built context with ' . $items_included . ' items, ' . strlen($context) . ' characters');
+        return $context;
+    }
+
+    /**
+     * Build enhanced system prompt with knowledge context
+     */
+    private function build_system_prompt($base_prompt, $knowledge_context) {
+        $prompt = $base_prompt;
+
+        if (!empty($knowledge_context)) {
+            $prompt .= "\n\nYou have access to the following knowledge base. Use this information to answer questions accurately:\n" . $knowledge_context;
+            $prompt .= "\n\nIf you don't know the answer based on the knowledge base provided, say so politely.";
+        }
+
+        return $prompt;
     }
 }
 
