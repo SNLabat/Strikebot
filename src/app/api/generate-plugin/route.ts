@@ -987,6 +987,10 @@ export async function POST(request: NextRequest) {
 
             // For the main PHP file, modify it for integration
             if (file === 'fullscreen-chatbot.php') {
+              // Remove the WordPress plugin headers to prevent WordPress from detecting it as a separate plugin
+              // This regex matches the plugin header comment block
+              content = content.replace(/\/\*\*[\s\S]*?\*\/\s*/m, '');
+
               // Remove the auto-initialization line since we'll initialize it from the main Strikebot class
               content = content.replace(/\/\/ Initialize the plugin\s*\r?\n\s*new FullscreenChatbot\(\);?\s*\r?\n?/g, '');
 
