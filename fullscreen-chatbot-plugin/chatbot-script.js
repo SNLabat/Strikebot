@@ -116,19 +116,13 @@ jQuery(document).ready(function($) {
             iconHtml = `<div class="message-icon">${iconContent}</div>`;
         }
 
-        // For bot messages, linkify the content. For user messages, keep as plain text
-        const messageText = (type === 'user') ? escapeHtml(text) : linkify(text);
-
-        const messageHtml = `
-            <div class="message ${messageClass}">
-                ${iconHtml}
-                <div class="message-content">
-                    <p>${messageText}</p>
-                </div>
-            </div>
-        `;
-
-        messagesContainer.append(messageHtml);
+        const messageEl = $('<div class="message ' + messageClass + '">' + iconHtml + '<div class="message-content"><p></p></div></div>');
+        if (type === 'user') {
+            messageEl.find('.message-content p').text(text);
+        } else {
+            messageEl.find('.message-content p').html(linkify(text));
+        }
+        messagesContainer.append(messageEl);
         scrollToBottom();
     }
 
@@ -152,21 +146,37 @@ jQuery(document).ready(function($) {
         return div.innerHTML;
     }
 
-    // Linkify text - convert URLs, emails, and phone numbers to clickable links
+    // Decode HTML entities so markdown like [text](url) is recognized even if brackets were encoded
+    function decodeHtmlEntities(str) {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = str;
+        return textarea.value;
+    }
+
+    // Normalize URL for href (browser will escape as needed when we set attribute via string)
+    function normalizeHref(url) {
+        const a = document.createElement('a');
+        a.href = url;
+        return a.href;
+    }
+
+    // Linkify text - convert markdown links [text](url), URLs, emails, and phone numbers to clickable links
     function linkify(text) {
-        let processedText = text;
+        if (!text || typeof text !== 'string') return '';
+        let processedText = decodeHtmlEntities(text);
         let linkMap = {};
         let linkCounter = 0;
 
         // First, extract and convert markdown-style links [text](url) BEFORE HTML escaping
+        // Allow optional space between ] and ( for robustness
         processedText = processedText.replace(
-            /\[([^\]]+)\]\(([^)]+)\)/g,
-            function(match, linkText, url) {
+            /\[([^\]]*)\](\s*)\(([^)]+)\)/g,
+            function(match, linkText, space, url) {
                 const placeholder = '___LINK_PLACEHOLDER_' + linkCounter + '___';
-                // Escape the link text for safety
                 const escapedLinkText = document.createElement('div');
                 escapedLinkText.textContent = linkText;
-                linkMap[placeholder] = '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + escapedLinkText.innerHTML + '</a>';
+                const safeHref = normalizeHref(url.trim()).replace(/"/g, '&quot;');
+                linkMap[placeholder] = '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + escapedLinkText.innerHTML + '</a>';
                 linkCounter++;
                 return placeholder;
             }
@@ -175,9 +185,10 @@ jQuery(document).ready(function($) {
         // Now escape all remaining HTML to prevent XSS
         let escapedText = escapeHtml(processedText);
 
-        // Restore the markdown links we extracted
-        for (let placeholder in linkMap) {
-            escapedText = escapedText.replace(placeholder, linkMap[placeholder]);
+        // Restore the markdown links we extracted (iterate in order so placeholder_0 before placeholder_1)
+        const placeholders = Object.keys(linkMap).sort();
+        for (let i = 0; i < placeholders.length; i++) {
+            escapedText = escapedText.split(placeholders[i]).join(linkMap[placeholders[i]]);
         }
 
         // Convert plain URLs to links (but not if they're already in an anchor tag)
@@ -188,7 +199,8 @@ jQuery(document).ready(function($) {
                 if (!url.match(/^https?:\/\//i)) {
                     href = 'http://' + url;
                 }
-                return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + url + '</a>';
+                const safeHref = normalizeHref(href).replace(/"/g, '&quot;');
+                return '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + url + '</a>';
             }
         );
 
@@ -201,11 +213,9 @@ jQuery(document).ready(function($) {
         );
 
         // Convert phone numbers to tel links
-        // Matches formats: 555-1234, (555) 123-4567, 555.123.4567, +1-555-123-4567, etc.
         escapedText = escapedText.replace(
             /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
             function(phone) {
-                // Clean phone number for tel: link (remove formatting)
                 const cleanPhone = phone.replace(/[^\d+]/g, '');
                 return '<a href="tel:' + cleanPhone + '" class="chatbot-link chatbot-link-phone">' + phone + '</a>';
             }
