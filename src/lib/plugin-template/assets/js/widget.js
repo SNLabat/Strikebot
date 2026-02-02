@@ -43,6 +43,14 @@
         div.textContent = text;
         let escapedText = div.innerHTML;
 
+        // Convert markdown-style links [text](url) to HTML links
+        escapedText = escapedText.replace(
+            /\[([^\]]+)\]\(([^)]+)\)/g,
+            function(match, text, url) {
+                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="strikebot-link">' + text + '</a>';
+            }
+        );
+
         // Convert URLs to links
         escapedText = escapedText.replace(
             /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,

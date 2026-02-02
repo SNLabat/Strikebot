@@ -157,6 +157,14 @@ jQuery(document).ready(function($) {
         // First escape HTML to prevent XSS
         let escapedText = escapeHtml(text);
 
+        // Convert markdown-style links [text](url) to HTML links
+        escapedText = escapedText.replace(
+            /\[([^\]]+)\]\(([^)]+)\)/g,
+            function(match, text, url) {
+                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + text + '</a>';
+            }
+        );
+
         // Convert URLs to links
         escapedText = escapedText.replace(
             /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,
