@@ -89,7 +89,8 @@ class Strikebot {
             $fullscreen_file = STRIKEBOT_PLUGIN_DIR . 'fullscreen/fullscreen-chatbot.php';
             if (file_exists($fullscreen_file)) {
                 require_once $fullscreen_file;
-                $this->fullscreen_chatbot = new FullscreenChatbot();
+                // Pass false to prevent standalone menu registration
+                $this->fullscreen_chatbot = new FullscreenChatbot(false);
             }
         }
 
@@ -960,7 +961,26 @@ export async function POST(request: NextRequest) {
 
         for (const file of fullscreenFiles) {
           try {
-            const content = fs.readFileSync(path.join(fullscreenDir, file), 'utf-8');
+            let content = fs.readFileSync(path.join(fullscreenDir, file), 'utf-8');
+
+            // For the main PHP file, modify it for integration
+            if (file === 'fullscreen-chatbot.php') {
+              // Remove the auto-initialization line since we'll initialize it from the main Strikebot class
+              content = content.replace(/\/\/ Initialize the plugin\s*\r?\n\s*new FullscreenChatbot\(\);?\s*\r?\n?/g, '');
+
+              // Modify the constructor to accept a $standalone parameter
+              content = content.replace(
+                /public function __construct\(\) \{/,
+                'private $standalone = true;\n\n    public function __construct($standalone = true) {\n        $this->standalone = $standalone;'
+              );
+
+              // Modify add_admin_menu to only add top-level menu if standalone
+              content = content.replace(
+                /public function add_admin_menu\(\) \{[\s\S]*?add_menu_page\(/,
+                'public function add_admin_menu() {\n        if (!$this->standalone) {\n            return; // Skip menu registration when integrated\n        }\n        add_menu_page('
+              );
+            }
+
             archive.append(content, { name: `strikebot/fullscreen/${file}` });
           } catch (err) {
             console.warn(`Fullscreen file ${file} not found, skipping`);
