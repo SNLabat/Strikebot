@@ -38,20 +38,35 @@
 
     // Linkify text - convert URLs, emails, and phone numbers to clickable links
     function linkify(text) {
-        // First escape HTML to prevent XSS
-        const div = document.createElement('div');
-        div.textContent = text;
-        let escapedText = div.innerHTML;
+        let processedText = text;
+        let linkMap = {};
+        let linkCounter = 0;
 
-        // Convert markdown-style links [text](url) to HTML links
-        escapedText = escapedText.replace(
+        // First, extract and convert markdown-style links [text](url) BEFORE HTML escaping
+        processedText = processedText.replace(
             /\[([^\]]+)\]\(([^)]+)\)/g,
-            function(match, text, url) {
-                return '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="strikebot-link">' + text + '</a>';
+            function(match, linkText, url) {
+                const placeholder = '___LINK_PLACEHOLDER_' + linkCounter + '___';
+                // Escape the link text for safety
+                const escapedLinkText = document.createElement('div');
+                escapedLinkText.textContent = linkText;
+                linkMap[placeholder] = '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="strikebot-link">' + escapedLinkText.innerHTML + '</a>';
+                linkCounter++;
+                return placeholder;
             }
         );
 
-        // Convert URLs to links
+        // Now escape all remaining HTML to prevent XSS
+        const div = document.createElement('div');
+        div.textContent = processedText;
+        let escapedText = div.innerHTML;
+
+        // Restore the markdown links we extracted
+        for (let placeholder in linkMap) {
+            escapedText = escapedText.replace(placeholder, linkMap[placeholder]);
+        }
+
+        // Convert plain URLs to links (but not if they're already in an anchor tag)
         escapedText = escapedText.replace(
             /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,
             function(url) {
