@@ -6,7 +6,7 @@ export interface AddOn {
   name: string;
   description: string;
   price: number; // monthly price
-  type: 'extra_messages' | 'remove_branding';
+  type: 'extra_messages' | 'remove_branding' | 'fullscreen_help_page';
   value?: number; // e.g., 2500 for extra messages
 }
 
@@ -259,5 +259,12 @@ export const AVAILABLE_ADDONS: AddOn[] = [
     description: 'Remove "Powered by Strikebot" branding',
     price: 199,
     type: 'remove_branding',
+  },
+  {
+    id: 'fullscreen-help-page',
+    name: 'Fullscreen Help Page',
+    description: 'Add a dedicated fullscreen chatbot help page with sidebar and chat history',
+    price: 49,
+    type: 'fullscreen_help_page',
   },
 ];

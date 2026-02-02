@@ -65,6 +65,7 @@ define('STRIKEBOT_CONFIG', '{{CONFIG_JSON}}');
 class Strikebot {
     private static $instance = null;
     private $config;
+    private $fullscreen_chatbot = null;
 
     public static function get_instance() {
         if (self::$instance === null) {
@@ -81,6 +82,15 @@ class Strikebot {
     private function init() {
         register_activation_hook(__FILE__, array($this, 'activate'));
         register_deactivation_hook(__FILE__, array($this, 'deactivate'));
+
+        // Initialize Fullscreen Help Page if addon is enabled
+        if ($this->is_fullscreen_help_page_enabled()) {
+            $fullscreen_file = STRIKEBOT_PLUGIN_DIR . 'fullscreen/fullscreen-chatbot.php';
+            if (file_exists($fullscreen_file)) {
+                require_once $fullscreen_file;
+                $this->fullscreen_chatbot = new FullscreenChatbot();
+            }
+        }
 
         add_action('init', array($this, 'load_textdomain'));
         add_action('admin_menu', array($this, 'add_admin_menu'));
@@ -184,10 +194,13 @@ class Strikebot {
         add_submenu_page('strikebot', __('Knowledge Base', 'strikebot'), __('Knowledge Base', 'strikebot'), 'manage_options', 'strikebot-knowledge', array($this, 'render_knowledge_page'));
         add_submenu_page('strikebot', __('Appearance', 'strikebot'), __('Appearance', 'strikebot'), 'manage_options', 'strikebot-appearance', array($this, 'render_appearance_page'));
         add_submenu_page('strikebot', __('Settings', 'strikebot'), __('Settings', 'strikebot'), 'manage_options', 'strikebot-settings', array($this, 'render_settings_page'));
+        if ($this->is_fullscreen_help_page_enabled() && $this->fullscreen_chatbot !== null) {
+            add_submenu_page('strikebot', __('Help Page', 'strikebot'), __('Help Page', 'strikebot'), 'manage_options', 'fullscreen-chatbot', array($this->fullscreen_chatbot, 'settings_page'));
+        }
     }
 
     public function admin_scripts($hook) {
-        if (strpos($hook, 'strikebot') === false) return;
+        if (strpos($hook, 'strikebot') === false && strpos($hook, 'fullscreen-chatbot') === false) return;
         wp_enqueue_media();
         wp_enqueue_style('strikebot-admin', STRIKEBOT_PLUGIN_URL . 'assets/css/admin.css', array(), STRIKEBOT_VERSION);
         wp_enqueue_script('strikebot-admin', STRIKEBOT_PLUGIN_URL . 'assets/js/admin.js', array('jquery'), STRIKEBOT_VERSION, true);
@@ -770,6 +783,16 @@ class Strikebot {
         }
         wp_send_json_success(array('total_urls' => count($url_list), 'urls' => $url_list));
     }
+
+    private function is_fullscreen_help_page_enabled() {
+        $add_ons = $this->config['addOns'] ?? array();
+        foreach ($add_ons as $add_on) {
+            if (is_array($add_on) && isset($add_on['type']) && $add_on['type'] === 'fullscreen_help_page') {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 Strikebot::get_instance();`,
@@ -909,6 +932,37 @@ export async function POST(request: NextRequest) {
     // Add readme
     archive.append(generateReadme(config), { name: 'strikebot/readme.txt' });
 
+    // Check if Fullscreen Help Page addon is enabled
+    const hasFullscreenHelpPage = config.addOns.some(
+      (addOn) => addOn.type === 'fullscreen_help_page'
+    );
+
+    if (hasFullscreenHelpPage) {
+      const fullscreenDir = path.join(process.cwd(), 'fullscreen-chatbot-plugin');
+
+      try {
+        // Add fullscreen chatbot files
+        const fullscreenFiles = [
+          'fullscreen-chatbot.php',
+          'admin-script.js',
+          'chatbot-script.js',
+          'chatbot-style.css',
+          'chatbot-template.php'
+        ];
+
+        for (const file of fullscreenFiles) {
+          try {
+            const content = fs.readFileSync(path.join(fullscreenDir, file), 'utf-8');
+            archive.append(content, { name: `strikebot/fullscreen/${file}` });
+          } catch (err) {
+            console.warn(`Fullscreen file ${file} not found, skipping`);
+          }
+        }
+      } catch (err) {
+        console.warn('Fullscreen chatbot directory not found, skipping');
+      }
+    }
+
     await archive.finalize();
 
     const buffer = Buffer.concat(chunks);
@@ -979,6 +1033,29 @@ function generateWidgetJs(): string {
 }
 
 function generateReadme(config: ChatbotConfig): string {
+  const hasFullscreenHelpPage = config.addOns.some(
+    (addOn) => addOn.type === 'fullscreen_help_page'
+  );
+  const hasRemoveBranding = config.addOns.some(
+    (addOn) => addOn.type === 'remove_branding'
+  );
+
+  let addOnsText = '';
+  if (config.addOns.length > 0) {
+    addOnsText = '\n\nActive Add-ons:\n';
+    if (hasFullscreenHelpPage) {
+      addOnsText += '* Fullscreen Help Page - Dedicated chatbot page with sidebar and chat history\n';
+    }
+    if (hasRemoveBranding) {
+      addOnsText += '* Remove Branding - "Powered by Strikebot" branding removed\n';
+    }
+    const extraMessages = config.addOns.filter((a) => a.type === 'extra_messages');
+    if (extraMessages.length > 0) {
+      const totalExtra = extraMessages.reduce((sum, a) => sum + (a.value || 0), 0);
+      addOnsText += `* Extra Messages - ${totalExtra.toLocaleString()} additional messages per month\n`;
+    }
+  }
+
   return `=== Strikebot - ${config.name} ===
 Contributors: strikebot
 Tags: chatbot, ai, customer support, live chat
@@ -999,20 +1076,20 @@ Features:
 * Knowledge Base training (sitemaps, URLs, files, text, Q&A)
 * Customizable appearance
 * Usage tracking and limits
-* Clean uninstall
+* Clean uninstall${hasFullscreenHelpPage ? '\n* Dedicated fullscreen help page with chat history' : ''}
 
 == Installation ==
 
 1. Upload the plugin folder to /wp-content/plugins/
 2. Activate the plugin through the 'Plugins' menu
-3. Go to Strikebot in the admin menu to configure
+3. Go to Strikebot in the admin menu to configure${hasFullscreenHelpPage ? '\n4. Configure the Fullscreen Help Page under Strikebot > Help Page' : ''}
 
 == Configuration ==
 
 This plugin comes pre-configured with the following limits:
 * ${config.limits.messageCreditsPerMonth} messages per month
 * ${config.limits.storageLimitMB >= 1 ? config.limits.storageLimitMB + ' MB' : (config.limits.storageLimitMB * 1024) + ' KB'} storage
-* ${config.limits.linkTrainingLimit === null ? 'Unlimited' : config.limits.linkTrainingLimit} training links
+* ${config.limits.linkTrainingLimit === null ? 'Unlimited' : config.limits.linkTrainingLimit} training links${addOnsText}
 
 == Changelog ==
 
