@@ -46,7 +46,7 @@ const pluginTemplates = {
  * Plugin Name: Strikebot - {{CHATBOT_NAME}}
  * Plugin URI: https://strikebot.io
  * Description: AI-powered chatbot for your website with Knowledge Base support
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Strikebot
  * License: GPL v2 or later
  * Text Domain: strikebot
@@ -56,7 +56,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('STRIKEBOT_VERSION', '1.3.1');
+define('STRIKEBOT_VERSION', '1.3.2');
 define('STRIKEBOT_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STRIKEBOT_PLUGIN_URL', plugin_dir_url(__FILE__));
 

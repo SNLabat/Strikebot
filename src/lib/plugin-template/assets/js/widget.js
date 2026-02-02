@@ -77,13 +77,8 @@
         div.textContent = processedText;
         let escapedText = div.innerHTML;
 
-        // Restore the markdown links we extracted (iterate in order)
-        const placeholders = Object.keys(linkMap).sort();
-        for (let i = 0; i < placeholders.length; i++) {
-            escapedText = escapedText.split(placeholders[i]).join(linkMap[placeholders[i]]);
-        }
-
-        // Convert plain URLs to links (but not if they're already in an anchor tag)
+        // Convert plain URLs, emails, and phones BEFORE restoring markdown links,
+        // so we never replace URLs that are already inside href="..."
         escapedText = escapedText.replace(
             /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,
             function(url) {
@@ -96,7 +91,6 @@
             }
         );
 
-        // Convert email addresses to mailto links
         escapedText = escapedText.replace(
             /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi,
             function(email) {
@@ -104,7 +98,6 @@
             }
         );
 
-        // Convert phone numbers to tel links
         escapedText = escapedText.replace(
             /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
             function(phone) {
@@ -112,6 +105,12 @@
                 return '<a href="tel:' + cleanPhone + '" class="strikebot-link strikebot-link-phone">' + phone + '</a>';
             }
         );
+
+        // Restore markdown links last so their href URLs are never matched by the plain-URL regex
+        const placeholders = Object.keys(linkMap).sort();
+        for (let i = 0; i < placeholders.length; i++) {
+            escapedText = escapedText.split(placeholders[i]).join(linkMap[placeholders[i]]);
+        }
 
         return escapedText;
     }

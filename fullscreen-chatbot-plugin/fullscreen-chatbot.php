@@ -3,7 +3,7 @@
  * Plugin Name: Fullscreen Chatbot
  * Plugin URI: https://example.com
  * Description: A fullscreen OpenAI-powered chatbot for your WordPress site with sidebar, dark mode, and chat history
- * Version: 3.1.2
+ * Version: 3.1.3
  * Author: Your Name
  * License: GPL v2 or later
  */
@@ -338,7 +338,7 @@ class FullscreenChatbot {
                 'fullscreen-chatbot-style',
                 plugin_dir_url(__FILE__) . 'chatbot-style.css',
                 array(),
-                '3.1.2'
+                '3.1.3'
             );
             wp_add_inline_style('fullscreen-chatbot-style', $accent_css);
 
@@ -346,7 +346,7 @@ class FullscreenChatbot {
                 'fullscreen-chatbot-script',
                 plugin_dir_url(__FILE__) . 'chatbot-script.js',
                 array('jquery'),
-                '3.1.2',
+                '3.1.3',
                 true
             );
 
