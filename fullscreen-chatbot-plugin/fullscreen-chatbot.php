@@ -327,7 +327,7 @@ class FullscreenChatbot {
         if (is_page($page_id) && !empty($page_id)) {
             list($accent_primary, $accent_secondary) = $this->get_accent_colors();
             $accent_css = sprintf(
-                ":root { --accent-primary: %s; --accent-secondary: %s; --accent-gradient: linear-gradient(135deg, %s 0%%, %s 100%%); }\n",
+                ":root { --accent-primary: %s !important; --accent-secondary: %s !important; --accent-gradient: linear-gradient(135deg, %s 0%%, %s 100%%) !important; }\n",
                 esc_attr($accent_primary),
                 esc_attr($accent_secondary),
                 esc_attr($accent_primary),
@@ -338,7 +338,7 @@ class FullscreenChatbot {
                 'fullscreen-chatbot-style',
                 plugin_dir_url(__FILE__) . 'chatbot-style.css',
                 array(),
-                '3.1.0'
+                '3.1.1'
             );
             wp_add_inline_style('fullscreen-chatbot-style', $accent_css);
 

@@ -485,19 +485,19 @@ body.chatbot-fullscreen {
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
-    padding: 0 60px 16px;
+    padding: 0 60px 32px;
 }
 
 @media (max-width: 1024px) {
     #chatbot-loading {
-        padding: 0 20px 16px;
+        padding: 0 20px 32px;
     }
 }
 
 .typing-indicator {
     display: flex;
     gap: 6px;
-    padding: 16px 20px;
+    padding: 16px 20px 24px 20px;
     background: var(--message-bot-bg);
     border: 1px solid var(--border-color);
     border-radius: 18px;
