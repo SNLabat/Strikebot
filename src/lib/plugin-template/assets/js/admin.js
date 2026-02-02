@@ -424,10 +424,8 @@
             });
         }
         
-        // Start processing - do 3 URLs in parallel for speed
+        // Start processing URLs sequentially (one at a time to avoid duplicates)
         processUrl(0);
-        processUrl(1);
-        processUrl(2);
     });
 
     // URL form
