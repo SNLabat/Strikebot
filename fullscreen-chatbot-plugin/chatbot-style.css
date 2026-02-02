@@ -652,3 +652,46 @@ body.chatbot-fullscreen {
     color: #991b1b;
     border: 1px solid #fecaca;
 }
+
+/* Linkified content */
+.message-content .chatbot-link {
+    color: var(--accent-primary);
+    text-decoration: underline;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+    word-break: break-word;
+}
+
+.message-content .chatbot-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+.message-content .chatbot-link:visited {
+    color: var(--accent-secondary);
+}
+
+/* Links in bot messages */
+.bot-message .message-content .chatbot-link {
+    color: var(--accent-primary);
+    font-weight: 500;
+}
+
+/* Links in user messages */
+.user-message .message-content .chatbot-link {
+    color: rgba(255, 255, 255, 0.95);
+    text-decoration: underline;
+}
+
+.user-message .message-content .chatbot-link:hover {
+    color: #ffffff;
+}
+
+/* Dark mode link adjustments */
+[data-theme="dark"] .message-content .chatbot-link {
+    color: #60a5fa;
+}
+
+[data-theme="dark"] .message-content .chatbot-link:visited {
+    color: #93c5fd;
+}

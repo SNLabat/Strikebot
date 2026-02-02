@@ -514,3 +514,46 @@
 .strikebot-dark .strikebot-rating-btn:hover:not(:disabled) {
     background: #374151;
 }
+
+/* Linkified content */
+.strikebot-message-content .strikebot-link {
+    color: var(--sb-primary);
+    text-decoration: underline;
+    transition: opacity 0.2s ease;
+    cursor: pointer;
+    word-break: break-word;
+}
+
+.strikebot-message-content .strikebot-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+.strikebot-message-content .strikebot-link:visited {
+    color: var(--sb-secondary);
+}
+
+/* Email and phone links in bot messages (light background) */
+.strikebot-message-bot .strikebot-message-content .strikebot-link {
+    color: var(--sb-primary);
+    font-weight: 500;
+}
+
+/* Links in user messages (on primary color background) */
+.strikebot-message-user .strikebot-message-content .strikebot-link {
+    color: rgba(255, 255, 255, 0.95);
+    text-decoration: underline;
+}
+
+.strikebot-message-user .strikebot-message-content .strikebot-link:hover {
+    color: #ffffff;
+}
+
+/* Dark mode link adjustments */
+.strikebot-dark .strikebot-message-content .strikebot-link {
+    color: #60a5fa;
+}
+
+.strikebot-dark .strikebot-message-content .strikebot-link:visited {
+    color: #93c5fd;
+}

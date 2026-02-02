@@ -36,6 +36,47 @@
     let isOpen = false;
     let isLoading = false;
 
+    // Linkify text - convert URLs, emails, and phone numbers to clickable links
+    function linkify(text) {
+        // First escape HTML to prevent XSS
+        const div = document.createElement('div');
+        div.textContent = text;
+        let escapedText = div.innerHTML;
+
+        // Convert URLs to links
+        escapedText = escapedText.replace(
+            /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,
+            function(url) {
+                let href = url;
+                if (!url.match(/^https?:\/\//i)) {
+                    href = 'http://' + url;
+                }
+                return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" class="strikebot-link">' + url + '</a>';
+            }
+        );
+
+        // Convert email addresses to mailto links
+        escapedText = escapedText.replace(
+            /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi,
+            function(email) {
+                return '<a href="mailto:' + email + '" class="strikebot-link strikebot-link-email">' + email + '</a>';
+            }
+        );
+
+        // Convert phone numbers to tel links
+        // Matches formats: 555-1234, (555) 123-4567, 555.123.4567, +1-555-123-4567, etc.
+        escapedText = escapedText.replace(
+            /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
+            function(phone) {
+                // Clean phone number for tel: link (remove formatting)
+                const cleanPhone = phone.replace(/[^\d+]/g, '');
+                return '<a href="tel:' + cleanPhone + '" class="strikebot-link strikebot-link-phone">' + phone + '</a>';
+            }
+        );
+
+        return escapedText;
+    }
+
     // Toggle chat
     function toggleChat() {
         isOpen = !isOpen;
@@ -70,7 +111,13 @@
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'strikebot-message-content';
-        contentDiv.textContent = content;
+
+        // For bot messages, linkify the content. For user messages, keep as plain text
+        if (!isUser) {
+            contentDiv.innerHTML = linkify(content);
+        } else {
+            contentDiv.textContent = content;
+        }
 
         messageDiv.appendChild(contentDiv);
         if (avatarHtml) {

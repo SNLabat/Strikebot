@@ -116,11 +116,14 @@ jQuery(document).ready(function($) {
             iconHtml = `<div class="message-icon">${iconContent}</div>`;
         }
 
+        // For bot messages, linkify the content. For user messages, keep as plain text
+        const messageText = (type === 'user') ? escapeHtml(text) : linkify(text);
+
         const messageHtml = `
             <div class="message ${messageClass}">
                 ${iconHtml}
                 <div class="message-content">
-                    <p>${escapeHtml(text)}</p>
+                    <p>${messageText}</p>
                 </div>
             </div>
         `;
@@ -147,6 +150,45 @@ jQuery(document).ready(function($) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // Linkify text - convert URLs, emails, and phone numbers to clickable links
+    function linkify(text) {
+        // First escape HTML to prevent XSS
+        let escapedText = escapeHtml(text);
+
+        // Convert URLs to links
+        escapedText = escapedText.replace(
+            /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,
+            function(url) {
+                let href = url;
+                if (!url.match(/^https?:\/\//i)) {
+                    href = 'http://' + url;
+                }
+                return '<a href="' + href + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + url + '</a>';
+            }
+        );
+
+        // Convert email addresses to mailto links
+        escapedText = escapedText.replace(
+            /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi,
+            function(email) {
+                return '<a href="mailto:' + email + '" class="chatbot-link chatbot-link-email">' + email + '</a>';
+            }
+        );
+
+        // Convert phone numbers to tel links
+        // Matches formats: 555-1234, (555) 123-4567, 555.123.4567, +1-555-123-4567, etc.
+        escapedText = escapedText.replace(
+            /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
+            function(phone) {
+                // Clean phone number for tel: link (remove formatting)
+                const cleanPhone = phone.replace(/[^\d+]/g, '');
+                return '<a href="tel:' + cleanPhone + '" class="chatbot-link chatbot-link-phone">' + phone + '</a>';
+            }
+        );
+
+        return escapedText;
     }
 
     // Sidebar toggle
