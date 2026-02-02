@@ -77,32 +77,41 @@
         div.textContent = processedText;
         let escapedText = div.innerHTML;
 
+        // Trim trailing sentence punctuation so it isn't inside the link
+        function trimTrailingPunctuation(s) {
+            const m = s.match(/^(.+?)([.,;:!?'")\]]+)$/);
+            return m ? { core: m[1], suffix: m[2] } : { core: s, suffix: '' };
+        }
+
         // Convert plain URLs, emails, and phones BEFORE restoring markdown links,
         // so we never replace URLs that are already inside href="..."
         escapedText = escapedText.replace(
-            /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,
-            function(url) {
+            /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])[.,;:!?'")\]]*/gi,
+            function(match) {
+                const { core: url, suffix } = trimTrailingPunctuation(match);
                 let href = url;
                 if (!url.match(/^https?:\/\//i)) {
                     href = 'http://' + url;
                 }
                 const safeHref = normalizeHref(href);
-                return '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer" class="strikebot-link">' + url + '</a>';
+                return '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer" class="strikebot-link">' + url + '</a>' + suffix;
             }
         );
 
         escapedText = escapedText.replace(
-            /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi,
-            function(email) {
-                return '<a href="mailto:' + email + '" class="strikebot-link strikebot-link-email">' + email + '</a>';
+            /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)[.,;:!?'")\]]*/gi,
+            function(match) {
+                const { core: email, suffix } = trimTrailingPunctuation(match);
+                return '<a href="mailto:' + email + '" class="strikebot-link strikebot-link-email">' + email + '</a>' + suffix;
             }
         );
 
         escapedText = escapedText.replace(
-            /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
-            function(phone) {
+            /((\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b)[.,;:!?'")\]]*/g,
+            function(match) {
+                const { core: phone, suffix } = trimTrailingPunctuation(match);
                 const cleanPhone = phone.replace(/[^\d+]/g, '');
-                return '<a href="tel:' + cleanPhone + '" class="strikebot-link strikebot-link-phone">' + phone + '</a>';
+                return '<a href="tel:' + cleanPhone + '" class="strikebot-link strikebot-link-phone">' + phone + '</a>' + suffix;
             }
         );
 

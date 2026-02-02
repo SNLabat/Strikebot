@@ -185,32 +185,41 @@ jQuery(document).ready(function($) {
         // Now escape all remaining HTML to prevent XSS
         let escapedText = escapeHtml(processedText);
 
+        // Trim trailing sentence punctuation so it isn't inside the link
+        function trimTrailingPunctuation(s) {
+            const m = s.match(/^(.+?)([.,;:!?'")\]]+)$/);
+            return m ? { core: m[1], suffix: m[2] } : { core: s, suffix: '' };
+        }
+
         // Convert plain URLs, emails, and phones BEFORE restoring markdown links,
         // so we never replace URLs that are already inside href="..."
         escapedText = escapedText.replace(
-            /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])/gi,
-            function(url) {
+            /(\b(https?:\/\/|www\.)[^\s<]+[^\s<.,;:!?'")\]])[.,;:!?'")\]]*/gi,
+            function(match) {
+                const { core: url, suffix } = trimTrailingPunctuation(match);
                 let href = url;
                 if (!url.match(/^https?:\/\//i)) {
                     href = 'http://' + url;
                 }
                 const safeHref = normalizeHref(href).replace(/"/g, '&quot;');
-                return '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + url + '</a>';
+                return '<a href="' + safeHref + '" target="_blank" rel="noopener noreferrer" class="chatbot-link">' + url + '</a>' + suffix;
             }
         );
 
         escapedText = escapedText.replace(
-            /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)/gi,
-            function(email) {
-                return '<a href="mailto:' + email + '" class="chatbot-link chatbot-link-email">' + email + '</a>';
+            /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9._-]+)[.,;:!?'")\]]*/gi,
+            function(match) {
+                const { core: email, suffix } = trimTrailingPunctuation(match);
+                return '<a href="mailto:' + email + '" class="chatbot-link chatbot-link-email">' + email + '</a>' + suffix;
             }
         );
 
         escapedText = escapedText.replace(
-            /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g,
-            function(phone) {
+            /((\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b)[.,;:!?'")\]]*/g,
+            function(match) {
+                const { core: phone, suffix } = trimTrailingPunctuation(match);
                 const cleanPhone = phone.replace(/[^\d+]/g, '');
-                return '<a href="tel:' + cleanPhone + '" class="chatbot-link chatbot-link-phone">' + phone + '</a>';
+                return '<a href="tel:' + cleanPhone + '" class="chatbot-link chatbot-link-phone">' + phone + '</a>' + suffix;
             }
         );
 
@@ -306,6 +315,19 @@ jQuery(document).ready(function($) {
         renderChatHistory();
     }
 
+    // Delete a chat session
+    function deleteSession(sessionId, e) {
+        if (e) e.stopPropagation();
+        if (!confirm('Delete this chat?')) return;
+        chatSessions = chatSessions.filter(s => s.id !== sessionId);
+        localStorage.setItem('chatbot_sessions', JSON.stringify(chatSessions));
+        if (currentSessionId === sessionId) {
+            startNewChat();
+        } else {
+            renderChatHistory();
+        }
+    }
+
     // Render chat history
     function renderChatHistory() {
         chatHistory.empty();
@@ -317,13 +339,24 @@ jQuery(document).ready(function($) {
 
             const chatItem = $(`
                 <div class="chat-item ${isActive ? 'active' : ''}" data-session-id="${session.id}">
-                    <div class="chat-item-title">${escapeHtml(session.title)}</div>
-                    <div class="chat-item-preview">${escapeHtml(preview)}</div>
+                    <div class="chat-item-content">
+                        <div class="chat-item-title">${escapeHtml(session.title)}</div>
+                        <div class="chat-item-preview">${escapeHtml(preview)}</div>
+                    </div>
+                    <button type="button" class="chat-item-delete" aria-label="Delete chat" title="Delete chat">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                    </button>
                 </div>
             `);
 
-            chatItem.on('click', function() {
-                loadSession(session.id);
+            chatItem.on('click', function(e) {
+                if (!$(e.target).closest('.chat-item-delete').length) {
+                    loadSession(session.id);
+                }
+            });
+
+            chatItem.find('.chat-item-delete').on('click', function(e) {
+                deleteSession(session.id, e);
             });
 
             chatHistory.append(chatItem);
