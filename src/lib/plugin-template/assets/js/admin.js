@@ -6,6 +6,69 @@
 
     console.log('Strikebot Admin JS loaded');
 
+    // Helper function: Normalize URL for duplicate detection (matches PHP normalize_url function)
+    function normalizeUrl(url) {
+        if (!url) return '';
+
+        try {
+            const urlObj = new URL(url);
+
+            // Remove www. prefix
+            let host = urlObj.hostname.toLowerCase();
+            if (host.startsWith('www.')) {
+                host = host.substring(4);
+            }
+
+            // Remove trailing slash from path
+            let path = urlObj.pathname;
+            if (path.endsWith('/') && path.length > 1) {
+                path = path.slice(0, -1);
+            }
+
+            // Rebuild URL without query/fragment
+            const normalized = urlObj.protocol + '//' + host + path;
+            return normalized.toLowerCase();
+        } catch (e) {
+            // Fallback for invalid URLs
+            return url.toLowerCase().replace(/\/$/, '').replace(/^www\./, '');
+        }
+    }
+
+    // Helper function: Remove duplicate URLs before crawling
+    function deduplicateUrls(urlList) {
+        const seen = new Map(); // Map normalized URL to original URL
+        const unique = [];
+        const duplicates = [];
+
+        urlList.forEach(url => {
+            const normalized = normalizeUrl(url);
+            if (!seen.has(normalized)) {
+                seen.set(normalized, url);
+                unique.push(url);
+            } else {
+                const originalUrl = seen.get(normalized);
+                duplicates.push({
+                    url: url,
+                    normalized: normalized,
+                    conflictsWith: originalUrl
+                });
+            }
+        });
+
+        if (duplicates.length > 0) {
+            console.group('🔍 Pre-crawl Duplicate Detection');
+            console.log('Found ' + duplicates.length + ' duplicate URLs in sitemap:');
+            duplicates.forEach((dup, index) => {
+                console.log((index + 1) + '. ' + dup.url);
+                console.log('   Normalized: ' + dup.normalized);
+                console.log('   Conflicts with: ' + dup.conflictsWith);
+            });
+            console.groupEnd();
+        }
+
+        return unique;
+    }
+
     // Theme Toggle
     $('#strikebot-theme-toggle').on('click', function() {
         const $toggle = $(this);
@@ -247,69 +310,6 @@
                     $(document).off('keydown.strikebot-modal');
                 }
             });
-        }
-        
-        // Normalize URL for duplicate detection (matches PHP normalize_url function)
-        function normalizeUrl(url) {
-            if (!url) return '';
-
-            try {
-                const urlObj = new URL(url);
-
-                // Remove www. prefix
-                let host = urlObj.hostname.toLowerCase();
-                if (host.startsWith('www.')) {
-                    host = host.substring(4);
-                }
-
-                // Remove trailing slash from path
-                let path = urlObj.pathname;
-                if (path.endsWith('/') && path.length > 1) {
-                    path = path.slice(0, -1);
-                }
-
-                // Rebuild URL without query/fragment
-                const normalized = urlObj.protocol + '//' + host + path;
-                return normalized.toLowerCase();
-            } catch (e) {
-                // Fallback for invalid URLs
-                return url.toLowerCase().replace(/\/$/, '').replace(/^www\./, '');
-            }
-        }
-
-        // Remove duplicate URLs before crawling
-        function deduplicateUrls(urlList) {
-            const seen = new Map(); // Map normalized URL to original URL
-            const unique = [];
-            const duplicates = [];
-
-            urlList.forEach(url => {
-                const normalized = normalizeUrl(url);
-                if (!seen.has(normalized)) {
-                    seen.set(normalized, url);
-                    unique.push(url);
-                } else {
-                    const originalUrl = seen.get(normalized);
-                    duplicates.push({
-                        url: url,
-                        normalized: normalized,
-                        conflictsWith: originalUrl
-                    });
-                }
-            });
-
-            if (duplicates.length > 0) {
-                console.group('🔍 Pre-crawl Duplicate Detection');
-                console.log('Found ' + duplicates.length + ' duplicate URLs in sitemap:');
-                duplicates.forEach((dup, index) => {
-                    console.log((index + 1) + '. ' + dup.url);
-                    console.log('   Normalized: ' + dup.normalized);
-                    console.log('   Conflicts with: ' + dup.conflictsWith);
-                });
-                console.groupEnd();
-            }
-
-            return unique;
         }
 
         // Log all URLs with their normalized versions before starting
