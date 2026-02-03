@@ -3,7 +3,7 @@
  * Plugin Name: Strikebot - {{CHATBOT_NAME}}
  * Plugin URI: https://strikebot.io
  * Description: AI-powered chatbot for your website with Knowledge Base support
- * Version: 1.8.1
+ * Version: 1.8.2
  * Author: Strikebot
  * License: GPL v2 or later
  * Text Domain: strikebot
@@ -13,7 +13,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('STRIKEBOT_VERSION', '1.8.1');
+define('STRIKEBOT_VERSION', '1.8.2');
 define('STRIKEBOT_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('STRIKEBOT_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -370,7 +370,7 @@ class Strikebot {
         // Limit context based on model capabilities
         // GPT-4.1 and newer models can handle 128k+ tokens
         // Using ~100,000 chars (~25,000 tokens) to leave room for response
-        $max_chars = 100000;
+        $max_chars = 20000; // Reduced to prevent rate limits (~5K tokens)
         $context = "";
         $items_included = 0;
         $items_by_type = array();
